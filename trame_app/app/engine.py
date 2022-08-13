@@ -6,52 +6,30 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+
 # ---------------------------------------------------------
 # Engine class
 # ---------------------------------------------------------
-
-
-class MyBusinessLogic:
+class MyEngine:
     def __init__(self, server):
         self._server = server
-
-        # initialize state + controller
         state, ctrl = server.state, server.controller
-        state.resolution = 6
-        ctrl.reset_resolution = self.reset_resolution
-        state.change("resolution")(self.on_resolution_change)
-        ctrl.widget_click = self.widget_click
-        ctrl.widget_change = self.widget_change
+        state.colormap_points = [[0, 1, 1, 1]]
+        ctrl.reset_colormap_points = self.reset_colormap_points
 
-    def reset_resolution(self):
-        self._server.state.resolution = 6
-
-    def on_resolution_change(self, resolution, **kwargs):
-        logger.info(f">>> ENGINE(a): Slider updating resolution to {resolution}")
-
-    def widget_click(self):
-        logger.info(">>> ENGINE(a): Widget Click")
-
-    def widget_change(self):
-        logger.info(">>> ENGINE(a): Widget Change")
+    def reset_colormap_points(self):
+        self._server.state.colormap_points = [[0, 1, 1, 1]]
 
 
 # ---------------------------------------------------------
 # Server binding
 # ---------------------------------------------------------
-
-
 def initialize(server):
-    state, ctrl = server.state, server.controller
+    state = server.state
 
-    @state.change("resolution")
-    def resolution_changed(resolution, **kwargs):
-        logger.info(f">>> ENGINE(b): Slider updating resolution to {resolution}")
+    @state.change("colormap_points")
+    def colormap_points_changed(colormap_points, **kwargs):
+        logger.info(f">>> Colormap points changed to {colormap_points}")
 
-    def protocols_ready(**initial_state):
-        logger.info(f">>> ENGINE(b): Server is ready {initial_state}")
-
-    ctrl.on_server_ready.add(protocols_ready)
-
-    engine = MyBusinessLogic(server)
+    engine = MyEngine(server)
     return engine
