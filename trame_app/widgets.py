@@ -1,5 +1,5 @@
 from trame_client.widgets.core import AbstractElement
-from .. import module
+from . import module
 
 
 class HtmlElement(AbstractElement):
@@ -10,15 +10,14 @@ class HtmlElement(AbstractElement):
 
 
 # Expose your vue component(s)
-class CustomWidget(HtmlElement):
+class ColormapEditor(HtmlElement):
     def __init__(self, **kwargs):
         super().__init__(
             "your-custom-widget",
             **kwargs,
         )
         self._attr_names += [
-            "attribute_name",
-            ("py_attr_name", "js_attr_name"),
+            ("scalar_data", "scalarData"),
         ]
         self._event_names += [
             "click",

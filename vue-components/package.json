@@ -3,18 +3,16 @@
   "private": true,
   "version": "0.0.0",
   "dependencies": {
+    "@vue/composition-api": "^1.7.0",
     "core-js": "^3.6.5",
     "vue": "2.6.14"
   },
   "scripts": {
-    "serve:CustomWidget": "vue-cli-service serve src/tests/CustomWidget/main.js",
     "build": "vue-cli-service build --target lib --name trame_app --filename vue-trame_app src/use.js",
     "lint": "vue-cli-service lint"
   },
   "devDependencies": {
     "@mdi/font": "^6.3.95",
-    "typeface-roboto": "^1.1.13",
-    "vuetify": "^2.5.10",
     "@vue/cli-plugin-babel": "~4.5.0",
     "@vue/cli-plugin-eslint": "~4.5.0",
     "@vue/cli-service": "~4.5.0",
@@ -24,7 +22,9 @@
     "eslint-plugin-prettier": "^3.1.3",
     "eslint-plugin-vue": "^6.2.2",
     "prettier": "^1.19.1",
-    "vue-template-compiler": "2.6.14"
+    "typeface-roboto": "^1.1.13",
+    "vue-template-compiler": "2.6.14",
+    "vuetify": "^2.5.10"
   },
   "files": [
     "dist/*",

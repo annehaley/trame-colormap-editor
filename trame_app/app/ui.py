@@ -3,12 +3,24 @@ from trame.widgets import vuetify
 from trame.widgets import vtk as trame_vtk
 
 from trame.app import get_server
-from trame_app.widgets import trame_app as my_widgets
+from trame_app.widgets import ColormapEditor
 
 from vtkmodules import all as vtk
 
 server = get_server()
 state, ctrl = server.state, server.controller
+
+
+colorFunctionPoints = [
+    [-3000, 0, 0, 0],
+    [-2000, 1, 0, 0],
+    [-1000, 0, 1, 0],
+    [0, 0, 0, 1],
+    [1000, 1, 0, 1],
+    [2000, 1, 1, 0],
+    [3000, 0, 1, 1],
+    [4000, 1, 1, 1],
+]
 
 
 def initialize(server):
@@ -19,38 +31,37 @@ def initialize(server):
     reader = vtk.vtkXMLImageDataReader()
     reader.SetFileName(torso_vti)
     reader.Update()
-    # cone_source = vtk.vtkConeSource()
     mapper = vtk.vtkFixedPointVolumeRayCastMapper()
     mapper.SetInputConnection(reader.GetOutputPort())
 
+    print(reader.GetOutput().GetScalarRange())
+
+    colorFunction = vtk.vtkColorTransferFunction()
+    for point in colorFunctionPoints:
+        colorFunction.AddRGBPoint(*point)
+
+    volumeProperty = vtk.vtkVolumeProperty()
+    volumeProperty.SetColor(colorFunction)
+    # volumeProperty.SetInterpolationTypeToLinear()
+
     actor = vtk.vtkVolume()
+    actor.SetProperty(volumeProperty)
     actor.SetMapper(mapper)
     renderer = vtk.vtkRenderer()
     renderWindow = vtk.vtkRenderWindow()
     renderWindow.AddRenderer(renderer)
-    renderer.AddActor(actor)
+    renderer.AddVolume(actor)
     renderer.ResetCamera()
 
     with SinglePageWithDrawerLayout(server) as layout:
         layout.title.set_text("Colormap Editor WIP")
-        # Toolbar
-        # with layout.toolbar:
 
         with layout.drawer:
             with vuetify.VContainer(classes="pa-5"):
-                my_widgets.CustomWidget(
-                    attribute_name="Hello",
-                    py_attr_name="World",
-                    click=ctrl.widget_click,
-                    change=ctrl.widget_change,
+                ColormapEditor(
+                    scalar_data="Hewwo World",
+                    v_model="colormap_points",
                 )
-            # vuetify.VSlider(  # Add slider
-            #     v_model=("resolution", 6),  # bind variable with an initial value of 6
-            #     min=3,
-            #     max=60,  # slider range
-            #     dense=True,
-            #     hide_details=True,  # presentation setup
-            # )
 
         # Main content
         with layout.content:
