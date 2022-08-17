@@ -2,20 +2,32 @@
 import { defineComponent } from '@vue/composition-api'
 
 export default defineComponent({
+  props: {
+    value: {
+      type: Array,
+      required: true,
+    },
+    histogramData: {
+      type: Array,
+      required: true,
+    }
+  },
   setup(props) {
 
-    console.log('custom color map editor mounted')
+    console.log(props);
+    console.log('custom color map editor mounted');
 
-    function  triggerClick() {
-      this.$emit('click');
-    }
-    function triggerChange() {
-      this.$emit('change');
+    function update() {
+      this.$emit('input', [
+        [-3000, 0, 0, 0],
+        [0, 1, 0, 1],
+        [1000, 1, 0, 0],
+        [4000, 0, 1, 0]
+      ]);
     }
 
     return {
-      triggerClick,
-      triggerChange,
+      update,
     }
   },
 })
@@ -25,9 +37,6 @@ export default defineComponent({
 
 <template>
 <div>
-  hello
-  {{ props }}
-  <v-btn @click="triggerClick">Custom click</v-btn>
-  <v-btn @click="triggerChange">Custom change</v-btn>
+  <v-btn @click="update">Update</v-btn>
 </div>
 </template>
