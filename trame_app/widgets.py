@@ -20,6 +20,5 @@ class ColormapEditor(HtmlElement):
             ("scalar_data", "scalarData"),
         ]
         self._event_names += [
-            "click",
             "change",
         ]

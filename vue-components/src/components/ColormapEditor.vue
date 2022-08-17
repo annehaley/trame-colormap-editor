@@ -1,9 +1,10 @@
 <script lang="ts">
-import { defineComponent, onMounted } from '@vue/composition-api'
+import { defineComponent } from '@vue/composition-api'
 
 export default defineComponent({
   setup(props) {
-    console.log('props:', props)
+
+    console.log('custom color map editor mounted')
 
     function  triggerClick() {
       this.$emit('click');
@@ -24,6 +25,8 @@ export default defineComponent({
 
 <template>
 <div>
+  hello
+  {{ props }}
   <v-btn @click="triggerClick">Custom click</v-btn>
   <v-btn @click="triggerChange">Custom change</v-btn>
 </div>

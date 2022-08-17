@@ -11,21 +11,11 @@ server = get_server()
 state, ctrl = server.state, server.controller
 
 
-colorFunctionPoints = [
-    [-3000, 0, 0, 0],
-    [-2000, 1, 0, 0],
-    [-1000, 0, 1, 0],
-    [0, 0, 0, 1],
-    [1000, 1, 0, 1],
-    [2000, 1, 1, 0],
-    [3000, 0, 1, 1],
-    [4000, 1, 1, 1],
-]
-
-
 def initialize(server):
     state, ctrl = server.state, server.controller
     state.trame__title = "Colormap Editor"
+    color_function_points = state.colormap_points
+    opacity_function_points = state.opacity_points
 
     torso_vti = "/home/anne/data/torso.vti"
     reader = vtk.vtkXMLImageDataReader()
@@ -34,18 +24,27 @@ def initialize(server):
     mapper = vtk.vtkFixedPointVolumeRayCastMapper()
     mapper.SetInputConnection(reader.GetOutputPort())
 
-    print(reader.GetOutput().GetScalarRange())
+    scalar_data_source = reader.GetOutput().GetPointData().GetScalars()
+    scalar_data = [
+        scalar_data_source.GetValue(i) for i in range(scalar_data_source.GetSize())
+    ]
+    print(len(scalar_data), "scalar data computed")
 
-    colorFunction = vtk.vtkColorTransferFunction()
-    for point in colorFunctionPoints:
-        colorFunction.AddRGBPoint(*point)
+    color_function = vtk.vtkColorTransferFunction()
+    for point in color_function_points:
+        color_function.AddRGBPoint(*point)
 
-    volumeProperty = vtk.vtkVolumeProperty()
-    volumeProperty.SetColor(colorFunction)
+    opacity_function = vtk.vtkPiecewiseFunction()
+    for point in opacity_function_points:
+        opacity_function.AddPoint(*point)
+
+    volume_property = vtk.vtkVolumeProperty()
+    volume_property.SetColor(color_function)
+    volume_property.SetScalarOpacity(opacity_function)
     # volumeProperty.SetInterpolationTypeToLinear()
 
     actor = vtk.vtkVolume()
-    actor.SetProperty(volumeProperty)
+    actor.SetProperty(volume_property)
     actor.SetMapper(mapper)
     renderer = vtk.vtkRenderer()
     renderWindow = vtk.vtkRenderWindow()
@@ -59,7 +58,7 @@ def initialize(server):
         with layout.drawer:
             with vuetify.VContainer(classes="pa-5"):
                 ColormapEditor(
-                    scalar_data="Hewwo World",
+                    # scalar_data=scalar_data,
                     v_model="colormap_points",
                 )
 
