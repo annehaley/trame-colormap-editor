@@ -7,18 +7,21 @@ serve_path = str(Path(__file__).with_name("serve").resolve())
 serve = {"__trame_app": serve_path}
 
 # List of JS files to load (usually from the serve path above)
-scripts = ["__trame_app/vue-trame_app.umd.min.js"]
+scripts = [
+    "__trame_app/vue-trame_app.umd.min.js",
+]
 
 # List of CSS files to load (usually from the serve path above)
-styles = ["__trame_app/vue-trame_app.css"]
+# styles = ["__trame_app/vue-trame_app.css"]
 
 vuetify_config = {}
 
 # List of Vue plugins to install/load
+# TODO: write a plugin for vue composition api
 vue_use = ["trame_app", ("trame_vuetify", vuetify_config)]
 
 # Uncomment to add entries to the shared state
-# state = {}
+state = {}
 
 
 # Optional if you want to execute custom initialization at module load

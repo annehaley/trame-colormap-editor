@@ -13,11 +13,11 @@ class HtmlElement(AbstractElement):
 class ColormapEditor(HtmlElement):
     def __init__(self, **kwargs):
         super().__init__(
-            "your-custom-widget",
+            "colormap-editor",
             **kwargs,
         )
         self._attr_names += [
-            ("scalar_data", "scalarData"),
+            ("histogram_data", "histogramData"),
         ]
         self._event_names += [
             "change",

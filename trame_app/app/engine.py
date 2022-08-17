@@ -1,6 +1,4 @@
-r"""
-Define your classes and create the instances that you need to expose
-"""
+from .vtk_pipeline import prepare_vtk_pipeline
 import logging
 
 logger = logging.getLogger(__name__)
@@ -34,6 +32,7 @@ class MyEngine:
     def __init__(self, server):
         self._server = server
         state, ctrl = server.state, server.controller
+        state.histogram_data = []
         state.colormap_points = DEFAULT_COLOR_MAP
         state.opacity_points = DEFAULT_OPACITY_MAP
         ctrl.reset_colormap_points = self.reset_colormap_points
@@ -46,11 +45,33 @@ class MyEngine:
 # Server binding
 # ---------------------------------------------------------
 def initialize(server):
-    state = server.state
+    engine = MyEngine(server)
+
+    state, ctrl = server.state, server.controller
+    state.trame__title = "Colormap Editor"
+
+    torso_vti = "/home/anne/data/torso.vti"
+    vtk_pipeline = prepare_vtk_pipeline(torso_vti)
+    color_function = vtk_pipeline["color_function"]
+    opacity_function = vtk_pipeline["opacity_function"]
+    render_window = vtk_pipeline["render_window"]
 
     @state.change("colormap_points")
-    def colormap_points_changed(colormap_points, **kwargs):
-        logger.info(f">>> Colormap points changed to {colormap_points}")
+    def update_colors(colormap_points, **kwargs):
+        color_function.RemoveAllPoints()
+        for point in colormap_points:
+            color_function.AddRGBPoint(*point)
+        ctrl.view_update()
 
-    engine = MyEngine(server)
+    @state.change("opacity_points")
+    def update_opacity(opacity_points, **kwargs):
+        opacity_function.RemoveAllPoints()
+        for point in opacity_points:
+            opacity_function.AddPoint(*point)
+        ctrl.view_update()
+
+    @ctrl.set("get_render_window")
+    def get_render_window():
+        return render_window
+
     return engine
