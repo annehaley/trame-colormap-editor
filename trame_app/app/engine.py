@@ -1,4 +1,4 @@
-from .vtk_pipeline import prepare_vtk_pipeline
+from .vtk_pipeline import VtkPipeline
 import logging
 
 logger = logging.getLogger(__name__)
@@ -33,10 +33,10 @@ def initialize(server):
     state.trame__title = "Colormap Editor"
 
     torso_vti = "/home/anne/data/torso.vti"
-    vtk_pipeline = prepare_vtk_pipeline(torso_vti)
-    color_function = vtk_pipeline["color_function"]
-    opacity_function = vtk_pipeline["opacity_function"]
-    render_window = vtk_pipeline["render_window"]
+    vtk_pipeline = VtkPipeline(torso_vti)
+    color_function = vtk_pipeline.color_function
+    opacity_function = vtk_pipeline.opacity_function
+    render_window = vtk_pipeline.render_window
 
     def reset_colormap_points(self):
         self._server.state.colormap_points = DEFAULT_COLOR_MAP
