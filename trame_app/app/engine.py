@@ -26,27 +26,9 @@ DEFAULT_OPACITY_MAP = [
 
 
 # ---------------------------------------------------------
-# Engine class
-# ---------------------------------------------------------
-class MyEngine:
-    def __init__(self, server):
-        self._server = server
-        state, ctrl = server.state, server.controller
-        state.histogram_data = []
-        state.colormap_points = DEFAULT_COLOR_MAP
-        state.opacity_points = DEFAULT_OPACITY_MAP
-        ctrl.reset_colormap_points = self.reset_colormap_points
-
-    def reset_colormap_points(self):
-        self._server.state.colormap_points = DEFAULT_COLOR_MAP
-
-
-# ---------------------------------------------------------
 # Server binding
 # ---------------------------------------------------------
 def initialize(server):
-    engine = MyEngine(server)
-
     state, ctrl = server.state, server.controller
     state.trame__title = "Colormap Editor"
 
@@ -55,6 +37,9 @@ def initialize(server):
     color_function = vtk_pipeline["color_function"]
     opacity_function = vtk_pipeline["opacity_function"]
     render_window = vtk_pipeline["render_window"]
+
+    def reset_colormap_points(self):
+        self._server.state.colormap_points = DEFAULT_COLOR_MAP
 
     @state.change("colormap_points")
     def update_colors(colormap_points, **kwargs):
@@ -74,4 +59,7 @@ def initialize(server):
     def get_render_window():
         return render_window
 
-    return engine
+    state.histogram_data = []
+    state.colormap_points = DEFAULT_COLOR_MAP
+    state.opacity_points = DEFAULT_OPACITY_MAP
+    ctrl.reset_colormap_points = reset_colormap_points
