@@ -31,35 +31,27 @@ DEFAULT_OPACITY_MAP = [
 def initialize(server):
     state, ctrl = server.state, server.controller
     state.trame__title = "Colormap Editor"
+    state.histogram_data = []
+    state.colormap_points = DEFAULT_COLOR_MAP
+    state.opacity_points = DEFAULT_OPACITY_MAP
 
     torso_vti = "/home/anne/data/torso.vti"
     vtk_pipeline = VtkPipeline(torso_vti)
-    color_function = vtk_pipeline.color_function
-    opacity_function = vtk_pipeline.opacity_function
-    render_window = vtk_pipeline.render_window
-
-    def reset_colormap_points(self):
-        self._server.state.colormap_points = DEFAULT_COLOR_MAP
 
     @state.change("colormap_points")
     def update_colors(colormap_points, **kwargs):
-        color_function.RemoveAllPoints()
-        for point in colormap_points:
-            color_function.AddRGBPoint(*point)
+        vtk_pipeline.update_colors(colormap_points)
         ctrl.view_update()
 
     @state.change("opacity_points")
     def update_opacity(opacity_points, **kwargs):
-        opacity_function.RemoveAllPoints()
-        for point in opacity_points:
-            opacity_function.AddPoint(*point)
+        vtk_pipeline.update_opacity(opacity_points)
         ctrl.view_update()
 
     @ctrl.set("get_render_window")
     def get_render_window():
-        return render_window
+        return vtk_pipeline.render_window
 
-    state.histogram_data = []
-    state.colormap_points = DEFAULT_COLOR_MAP
-    state.opacity_points = DEFAULT_OPACITY_MAP
-    ctrl.reset_colormap_points = reset_colormap_points
+    @ctrl.set("reset_colormap_points")
+    def reset_colormap_points(self):
+        self._server.state.colormap_points = DEFAULT_COLOR_MAP
