@@ -1,5 +1,5 @@
-import CustomWidget from './CustomWidget';
+import ColormapEditor from './ColormapEditor';
 
 export default {
-  yourCustomWidget: CustomWidget,
+  ColormapEditor,
 };

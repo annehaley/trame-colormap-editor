@@ -1,57 +1,57 @@
-r"""
-Define your classes and create the instances that you need to expose
-"""
+from .vtk_pipeline import VtkPipeline
 import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-# ---------------------------------------------------------
-# Engine class
-# ---------------------------------------------------------
+
+DEFAULT_COLOR_MAP = [
+    [-3000, 0, 0, 0],
+    [-2000, 1, 0, 0],
+    [-1000, 0, 1, 0],
+    [0, 0, 0, 1],
+    [1000, 1, 0, 1],
+    [2000, 1, 1, 0],
+    [3000, 0, 1, 1],
+    [4000, 1, 1, 1],
+]
 
 
-class MyBusinessLogic:
-    def __init__(self, server):
-        self._server = server
-
-        # initialize state + controller
-        state, ctrl = server.state, server.controller
-        state.resolution = 6
-        ctrl.reset_resolution = self.reset_resolution
-        state.change("resolution")(self.on_resolution_change)
-        ctrl.widget_click = self.widget_click
-        ctrl.widget_change = self.widget_change
-
-    def reset_resolution(self):
-        self._server.state.resolution = 6
-
-    def on_resolution_change(self, resolution, **kwargs):
-        logger.info(f">>> ENGINE(a): Slider updating resolution to {resolution}")
-
-    def widget_click(self):
-        logger.info(">>> ENGINE(a): Widget Click")
-
-    def widget_change(self):
-        logger.info(">>> ENGINE(a): Widget Change")
+DEFAULT_OPACITY_MAP = [
+    [-3000, 0],
+    [0, 0.01],
+    [2000, 0.5],
+    [4000, 1],
+]
 
 
 # ---------------------------------------------------------
 # Server binding
 # ---------------------------------------------------------
-
-
 def initialize(server):
     state, ctrl = server.state, server.controller
+    state.trame__title = "Colormap Editor"
+    state.histogram_data = []
+    state.colormap_points = DEFAULT_COLOR_MAP
+    state.opacity_points = DEFAULT_OPACITY_MAP
 
-    @state.change("resolution")
-    def resolution_changed(resolution, **kwargs):
-        logger.info(f">>> ENGINE(b): Slider updating resolution to {resolution}")
+    torso_vti = "/home/anne/data/torso.vti"
+    vtk_pipeline = VtkPipeline(torso_vti)
 
-    def protocols_ready(**initial_state):
-        logger.info(f">>> ENGINE(b): Server is ready {initial_state}")
+    @state.change("colormap_points")
+    def update_colors(colormap_points, **kwargs):
+        vtk_pipeline.update_colors(colormap_points)
+        ctrl.view_update()
 
-    ctrl.on_server_ready.add(protocols_ready)
+    @state.change("opacity_points")
+    def update_opacity(opacity_points, **kwargs):
+        vtk_pipeline.update_opacity(opacity_points)
+        ctrl.view_update()
 
-    engine = MyBusinessLogic(server)
-    return engine
+    @ctrl.set("get_render_window")
+    def get_render_window():
+        return vtk_pipeline.render_window
+
+    @ctrl.set("reset_colormap_points")
+    def reset_colormap_points(self):
+        self._server.state.colormap_points = DEFAULT_COLOR_MAP
