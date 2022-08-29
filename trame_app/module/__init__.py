@@ -12,7 +12,7 @@ scripts = [
 ]
 
 # List of CSS files to load (usually from the serve path above)
-# styles = ["__trame_app/vue-trame_app.css"]
+styles = ["__trame_app/vue-trame_app.css"]
 
 vuetify_config = {}
 
