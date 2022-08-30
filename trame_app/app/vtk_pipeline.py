@@ -9,12 +9,13 @@ from vtk import (
     vtkRenderWindow,
     vtkRenderWindowInteractor,
 )
+from vtk.util.numpy_support import vtk_to_numpy
+import numpy
 
 
 class VtkPipeline:
     def __init__(self, input_image):
         self.load_file(input_image)
-        self.get_histogram_data()
 
         color_function = vtkColorTransferFunction()
         opacity_function = vtkPiecewiseFunction()
@@ -40,22 +41,26 @@ class VtkPipeline:
         self.render_window = render_window
 
     def load_file(self, input_image):
-        reader = vtkXMLImageDataReader()
-        reader.SetFileName(input_image)
-        reader.Update()
+        self.reader = vtkXMLImageDataReader()
+        self.reader.SetFileName(input_image)
+        self.reader.Update()
         mapper = vtkFixedPointVolumeRayCastMapper()
-        mapper.SetInputConnection(reader.GetOutputPort())
+        mapper.SetInputConnection(self.reader.GetOutputPort())
         self.mapper = mapper
 
-    def get_histogram_data(self):
-        # Send as n buckets
-        # scalar_data_source = reader.GetOutput().GetPointData().GetScalars()
-        # scalar_data = [
-        #     scalar_data_source.GetValue(i) for i in range(scalar_data_source.GetSize())
-        # ]
-        # print(len(scalar_data), "scalar data computed")
-        # state.scalars = [6, 7, 8, 9, 0]
-        pass
+    def get_histogram_data(self, buckets):
+        scalar_data_source = vtk_to_numpy(
+            self.reader.GetOutput().GetPointData().GetScalars()
+        )
+        bucket_counts, bucket_edges = numpy.histogram(scalar_data_source, buckets)
+        histogram_data = {
+            "counts": bucket_counts.tolist(),
+            "range": [
+                bucket_edges[0],
+                bucket_edges[-1],
+            ],
+        }
+        return histogram_data
 
     def update_colors(self, colormap_points):
         self.color_function.RemoveAllPoints()
