@@ -42,14 +42,12 @@ export default {
       );
       drawGradient(this.colorNodes, this.$refs.gradientBox, this.fullRange);
     },
+    updateSingleNode(nodeIndex, newValue) {
+      this.colorNodes[nodeIndex] = newValue;
+      this.render();
+    },
     update() {
-      this.colorNodes = [
-        [-3000, 0, 0, 0],
-        [0, 1, 0, 1],
-        [1000, 1, 0, 0],
-        [4000, 0, 1, 0],
-      ];
-      this.$emit("input", this.colorNodes);
+      this.$emit("input", [...this.colorNodes]);
     },
   },
   mounted() {
@@ -68,14 +66,16 @@ export default {
     <div ref="colorLine" :class="!dark ? 'color-line' : 'color-line dark'">
       <canvas ref="gradientBox" class="gradient-box indented" />
       <color-node
-        v-for="node in colorNodes"
-        :key="node[0]"
+        v-for="(node, index) in colorNodes"
+        :key="'node_' + index"
+        :index="index"
         :scalarValue="node[0]"
         :rgbValue="node.slice(1)"
         :histogramData="histogramData"
         :colorLine="colorLine"
         :fullRange="fullRange"
         :dark="dark"
+        @change="updateSingleNode"
       />
     </div>
     <v-btn @click="update" class="update-btn">Update</v-btn>

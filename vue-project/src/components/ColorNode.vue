@@ -5,6 +5,10 @@ import makeDraggable from "../utils/drag";
 
 export default {
   props: {
+    index: {
+      type: Number,
+      required: true,
+    },
     scalarValue: {
       type: Number,
       required: true,
@@ -40,25 +44,43 @@ export default {
       const rgb = this.rgbValue.map((value) => value * 255);
       return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
     },
+    gradientLength() {
+      // -40 accounts for the 20px padding on either side
+      return this.colorLine.clientWidth - 40;
+    },
+    rangeDifference() {
+      return this.fullRange[1] - this.fullRange[0];
+    },
   },
   methods: {
+    scalarToPosition(scalar) {
+      const clampedScalar = clamp(scalar, this.fullRange[0], this.fullRange[1]);
+      const calculatedPosition =
+        this.gradientLength *
+        ((clampedScalar - this.fullRange[0]) / this.rangeDifference);
+      return clamp(calculatedPosition, -10, this.gradientLength) + 20;
+    },
+    positionToScalar(position) {
+      position -= 10; // -10 accounts for half the square width
+      return (
+        (position / this.gradientLength) * this.rangeDifference +
+        this.fullRange[0]
+      );
+    },
     onDragSquare() {
-      console.log(this.$el.offsetLeft);
+      const scalar = this.positionToScalar(this.$el.offsetLeft);
+      const newValue = [scalar, ...this.rgbValue];
+      this.$emit("change", this.index, newValue);
     },
     updateXPosition() {
       if (!this.colorLine) return;
-      const clampedScalar = clamp(
-        this.scalarValue,
-        this.fullRange[0],
-        this.fullRange[1]
+      this.xPosition = this.scalarToPosition(this.scalarValue);
+      makeDraggable(
+        this.$el,
+        this.onDragSquare,
+        [-10, this.colorLine.clientWidth - 10],
+        []
       );
-      const lineLength = this.colorLine.clientWidth;
-      const calculatedPosition =
-        lineLength *
-        ((clampedScalar - this.fullRange[0]) /
-          (this.fullRange[1] - this.fullRange[0]));
-      this.xPosition = clamp(calculatedPosition, -10, lineLength) - 10;
-      makeDraggable(this.$el, this.onDragSquare, [-10, lineLength], []);
     },
   },
   mounted() {
