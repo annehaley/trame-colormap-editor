@@ -34,7 +34,6 @@ export function drawHistogram(
   labels.forEach((barLabel) => {
     const label = document.createElement("p");
     label.innerHTML = `${barLabel}`;
-    label.style.width = `${barWidth}px`;
     label.style.textAlign = "center";
     labelsDiv.appendChild(label);
   });

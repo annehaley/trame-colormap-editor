@@ -48,15 +48,12 @@ export default {
         this.fullRange[0],
         this.fullRange[1]
       );
-      const lineLength = this.colorLine.clientWidth;
-      const maxPosition = lineLength - 10;
+      const lineLength = this.colorLine.clientWidth + 10;
       const calculatedPosition =
         lineLength *
-          ((clampedScalar - this.fullRange[0]) /
-            (this.fullRange[1] - this.fullRange[0])) -
-        7; // this is half the width of the box;
-      this.xPosition =
-        calculatedPosition < maxPosition ? calculatedPosition : maxPosition;
+        ((clampedScalar - this.fullRange[0]) /
+          (this.fullRange[1] - this.fullRange[0]));
+      this.xPosition = clamp(calculatedPosition, -10, lineLength) - 15; // 15 is the width of the box;
     },
   },
   mounted() {
@@ -90,9 +87,8 @@ export default {
 }
 .color-square::after {
   content: "\25B2";
-  font-size: 18px;
+  font-size: 16px;
   position: relative;
-  top: -22px;
-  left: -5%;
+  top: -20px;
 }
 </style>

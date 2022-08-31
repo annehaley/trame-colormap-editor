@@ -63,10 +63,10 @@ export default {
 
 <template>
   <div :class="!dark ? 'widget-container' : 'widget-container dark'">
-    <canvas ref="histogram" class="histogram-canvas" />
-    <div ref="histogramLabels" class="histogram-labels" />
+    <canvas ref="histogram" class="histogram-canvas indented" />
+    <div ref="histogramLabels" class="histogram-labels indented" />
     <div ref="colorLine" :class="!dark ? 'color-line' : 'color-line dark'">
-      <canvas ref="gradientBox" class="gradient-box" />
+      <canvas ref="gradientBox" class="gradient-box indented" />
       <color-node
         v-for="node in colorNodes"
         :key="node[0]"
@@ -90,10 +90,15 @@ export default {
   display: flex;
   flex-direction: column;
   row-gap: 5px;
+  position: relative;
+  margin: 10px;
+}
+.indented {
+  margin: 0px 20px;
+  max-width: calc(100% - 40px);
 }
 .histogram-canvas {
   height: 100px;
-  width: 100%;
 }
 .histogram-labels {
   display: flex;
