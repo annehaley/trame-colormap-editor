@@ -79,6 +79,8 @@ export default {
         this.$el,
         this.onDragSquare,
         [-10, this.colorLine.clientWidth - 10],
+        [],
+        this.fullRange.map((value) => this.scalarToPosition(value) - 10),
         []
       );
     },
