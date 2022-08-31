@@ -89,7 +89,7 @@ export default {
 .widget-container {
   display: flex;
   flex-direction: column;
-  row-gap: 5px;
+  row-gap: 10px;
   position: relative;
   margin: 10px;
 }

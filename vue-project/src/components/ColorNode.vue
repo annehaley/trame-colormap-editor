@@ -1,6 +1,7 @@
 <script lang="ts">
 import { HistogramData } from "../utils/types";
 import { clamp } from "../utils/canvasDrawing";
+import makeDraggable from "../utils/drag";
 
 export default {
   props: {
@@ -41,6 +42,9 @@ export default {
     },
   },
   methods: {
+    onDragSquare() {
+      console.log(this.$el.offsetLeft);
+    },
     updateXPosition() {
       if (!this.colorLine) return;
       const clampedScalar = clamp(
@@ -48,12 +52,13 @@ export default {
         this.fullRange[0],
         this.fullRange[1]
       );
-      const lineLength = this.colorLine.clientWidth + 10;
+      const lineLength = this.colorLine.clientWidth;
       const calculatedPosition =
         lineLength *
         ((clampedScalar - this.fullRange[0]) /
           (this.fullRange[1] - this.fullRange[0]));
-      this.xPosition = clamp(calculatedPosition, -10, lineLength) - 15; // 15 is the width of the box;
+      this.xPosition = clamp(calculatedPosition, -10, lineLength) - 10;
+      makeDraggable(this.$el, this.onDragSquare, [-10, lineLength], []);
     },
   },
   mounted() {
@@ -67,6 +72,7 @@ export default {
 
 <template>
   <div
+    ref="colorSquare"
     v-if="colorLine"
     :class="!dark ? 'color-square' : 'color-square dark'"
     :style="`left: ${xPosition}px; background-color: ${rgbString}`"
@@ -78,8 +84,8 @@ export default {
   position: absolute;
   top: 0px;
   margin-top: 10px;
-  height: 15px;
-  width: 15px;
+  height: 20px;
+  width: 20px;
   border: 3px solid black;
 }
 .color-square.dark {
