@@ -1,9 +1,7 @@
 import { HistogramData } from "./types";
-const BAR_GAP = 2;
+import clamp from "./clamp";
 
-export function clamp(num: number, min: number, max: number) {
-  return Math.min(Math.max(num, min), max);
-}
+const BAR_GAP = 2;
 
 export function drawHistogram(
   histogramData: HistogramData,

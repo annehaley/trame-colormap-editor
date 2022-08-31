@@ -1,6 +1,6 @@
 <script lang="ts">
 import { HistogramData } from "../utils/types";
-import { clamp } from "../utils/canvasDrawing";
+import clamp from "../utils/clamp";
 import makeDraggable from "../utils/drag";
 
 export default {
