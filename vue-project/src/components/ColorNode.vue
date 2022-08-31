@@ -1,7 +1,6 @@
 <script lang="ts">
 import { HistogramData } from "../utils/types";
-import clamp from "../utils/clamp";
-import makeDraggable from "../utils/drag";
+import { makeDraggable } from "../utils/drag";
 
 export default {
   props: {
@@ -24,8 +23,16 @@ export default {
     colorLine: {
       required: true,
     },
-    fullRange: {
+    dataRange: {
       type: Array,
+      required: true,
+    },
+    scalarToPosition: {
+      type: Function,
+      required: true,
+    },
+    positionToScalar: {
+      type: Function,
       required: true,
     },
     dark: {
@@ -44,29 +51,8 @@ export default {
       const rgb = this.rgbValue.map((value) => value * 255);
       return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
     },
-    gradientLength() {
-      // -40 accounts for the 20px padding on either side
-      return this.colorLine.clientWidth - 40;
-    },
-    rangeDifference() {
-      return this.fullRange[1] - this.fullRange[0];
-    },
   },
   methods: {
-    scalarToPosition(scalar) {
-      const clampedScalar = clamp(scalar, this.fullRange[0], this.fullRange[1]);
-      const calculatedPosition =
-        this.gradientLength *
-        ((clampedScalar - this.fullRange[0]) / this.rangeDifference);
-      return clamp(calculatedPosition, -10, this.gradientLength) + 20;
-    },
-    positionToScalar(position) {
-      position -= 10; // -10 accounts for half the square width
-      return (
-        (position / this.gradientLength) * this.rangeDifference +
-        this.fullRange[0]
-      );
-    },
     onDragSquare() {
       const scalar = this.positionToScalar(this.$el.offsetLeft);
       const newValue = [scalar, ...this.rgbValue];
@@ -75,14 +61,6 @@ export default {
     updateXPosition() {
       if (!this.colorLine) return;
       this.xPosition = this.scalarToPosition(this.scalarValue);
-      makeDraggable(
-        this.$el,
-        this.onDragSquare,
-        [-10, this.colorLine.clientWidth - 10],
-        [],
-        this.fullRange.map((value) => this.scalarToPosition(value) - 10),
-        []
-      );
     },
   },
   mounted() {
@@ -90,6 +68,19 @@ export default {
   },
   updated() {
     this.updateXPosition();
+
+    makeDraggable(
+      this.$el,
+      this.onDragSquare,
+      {
+        x: [-10, this.colorLine.clientWidth - 10],
+        y: [],
+      },
+      {
+        x: this.dataRange.map((value) => this.scalarToPosition(value)),
+        y: [],
+      }
+    );
   },
 };
 </script>

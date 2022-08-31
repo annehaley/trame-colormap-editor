@@ -1,5 +1,4 @@
 import { HistogramData } from "./types";
-import clamp from "./clamp";
 
 const BAR_GAP = 2;
 
@@ -41,7 +40,8 @@ export function drawHistogram(
 export function drawGradient(
   colorNodes: Array<Array<number>>,
   canvas: HTMLCanvasElement,
-  fullRange: Array<number>
+  fullRange: Array<number>,
+  crop: number
 ) {
   const context = canvas.getContext("2d");
   if (!context) return;
@@ -49,14 +49,19 @@ export function drawGradient(
 
   const gradient = context.createLinearGradient(0, 0, width, 0);
   colorNodes.forEach((node) => {
-    const scalarValue = clamp(node[0], fullRange[0], fullRange[1]);
+    const scalarValue = Math.floor(node[0]);
     const proportion =
       (scalarValue - fullRange[0]) / (fullRange[1] - fullRange[0]);
     const rgb = node.slice(1).map((value) => value * 255);
     gradient.addColorStop(proportion, `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`);
   });
-  gradient.addColorStop(1, "white");
 
   context.fillStyle = gradient;
   context.fillRect(0, 0, width, height);
+
+  // crop to indentation of histogram
+  const cropProportion = (crop - fullRange[0]) / (fullRange[1] - fullRange[0]);
+  crop = cropProportion * width;
+  context.clearRect(0, 0, crop, height);
+  context.clearRect(width - crop, 0, crop, height);
 }

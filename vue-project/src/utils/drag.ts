@@ -1,12 +1,16 @@
 // Modified from https://www.w3schools.com/howto/howto_js_draggable.asp
 
-export default function makeDraggable(
+export function makeDraggable(
   elmnt: HTMLElement,
   callback: () => void,
-  xBounds = [],
-  yBounds = [],
-  xSnapPoints = [],
-  ySnapPoints = []
+  bounds = {
+    x: [],
+    y: [],
+  },
+  snapPoints = {
+    x: [],
+    y: [],
+  }
 ) {
   let pos1 = 0,
     pos2 = 0,
@@ -35,14 +39,14 @@ export default function makeDraggable(
     // set the element's new position:
     let newX = elmnt.offsetLeft - pos1;
     let newY = elmnt.offsetTop - pos2;
-    if (yBounds.length == 2 && newY >= yBounds[0] && newY <= yBounds[1]) {
+    if (bounds.y.length == 2 && newY >= bounds.y[0] && newY <= bounds.y[1]) {
       elmnt.style.top = newY + "px";
-      ySnapPoints.forEach((snap) => {
+      snapPoints.y.forEach((snap) => {
         if (Math.abs(snap - newY) <= 5) newY = snap;
       });
     }
-    if (xBounds.length == 2 && newX >= xBounds[0] && newX <= xBounds[1]) {
-      xSnapPoints.forEach((snap) => {
+    if (bounds.x.length == 2 && newX >= bounds.x[0] && newX <= bounds.x[1]) {
+      snapPoints.x.forEach((snap) => {
         if (Math.abs(snap - newX) <= 5) newX = snap;
       });
       elmnt.style.left = newX + "px";

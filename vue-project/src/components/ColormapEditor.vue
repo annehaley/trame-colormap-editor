@@ -21,8 +21,15 @@ export default {
     },
   },
   computed: {
-    fullRange() {
+    dataRange() {
       return this.histogramData.range;
+    },
+    gradientLength() {
+      // -40 accounts for the 20px padding on either side
+      return this.$refs.colorLine.clientWidth - 40;
+    },
+    rangeDifference() {
+      return this.dataRange[1] - this.dataRange[0];
     },
   },
   data() {
@@ -32,6 +39,26 @@ export default {
     };
   },
   methods: {
+    scalarToPosition(scalar) {
+      let calculatedPosition =
+        this.gradientLength *
+        ((scalar - this.dataRange[0]) / this.rangeDifference);
+      calculatedPosition += 10; // +10 accounts for half the square width
+      return calculatedPosition;
+    },
+    positionToScalar(position) {
+      position -= 10; // -10 accounts for half the square width
+      return (
+        (position / this.gradientLength) * this.rangeDifference +
+        this.dataRange[0]
+      );
+    },
+    getFullRange() {
+      return [
+        this.positionToScalar(this.scalarToPosition(this.dataRange[0]) - 20),
+        this.positionToScalar(this.scalarToPosition(this.dataRange[1]) + 20),
+      ].map((val) => Math.floor(val));
+    },
     render() {
       this.colorLine = this.$refs.colorLine;
       drawHistogram(
@@ -40,7 +67,12 @@ export default {
         this.$refs.histogramLabels,
         this.dark
       );
-      drawGradient(this.colorNodes, this.$refs.gradientBox, this.fullRange);
+      drawGradient(
+        this.colorNodes,
+        this.$refs.gradientBox,
+        this.getFullRange(),
+        this.dataRange[0]
+      );
     },
     updateSingleNode(nodeIndex, newValue) {
       this.colorNodes[nodeIndex] = newValue;
@@ -64,7 +96,7 @@ export default {
     <canvas ref="histogram" class="histogram-canvas indented" />
     <div ref="histogramLabels" class="histogram-labels indented" />
     <div ref="colorLine" :class="!dark ? 'color-line' : 'color-line dark'">
-      <canvas ref="gradientBox" class="gradient-box indented" />
+      <canvas ref="gradientBox" class="gradient-box" />
       <color-node
         v-for="(node, index) in colorNodes"
         :key="'node_' + index"
@@ -73,8 +105,10 @@ export default {
         :rgbValue="node.slice(1)"
         :histogramData="histogramData"
         :colorLine="colorLine"
-        :fullRange="fullRange"
+        :dataRange="dataRange"
         :dark="dark"
+        :scalarToPosition="scalarToPosition"
+        :positionToScalar="positionToScalar"
         @change="updateSingleNode"
       />
     </div>
