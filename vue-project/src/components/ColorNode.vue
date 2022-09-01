@@ -1,9 +1,13 @@
 <script lang="ts">
 import { HistogramData } from "../utils/types";
-import { clamp } from "../utils/canvasDrawing";
+import { makeDraggable } from "../utils/drag";
 
 export default {
   props: {
+    index: {
+      type: Number,
+      required: true,
+    },
     scalarValue: {
       type: Number,
       required: true,
@@ -19,8 +23,16 @@ export default {
     colorLine: {
       required: true,
     },
-    fullRange: {
+    dataRange: {
       type: Array,
+      required: true,
+    },
+    scalarToPosition: {
+      type: Function,
+      required: true,
+    },
+    positionToScalar: {
+      type: Function,
       required: true,
     },
     dark: {
@@ -41,22 +53,14 @@ export default {
     },
   },
   methods: {
+    onDragSquare() {
+      const scalar = this.positionToScalar(this.$el.offsetLeft);
+      const newValue = [scalar, ...this.rgbValue];
+      this.$emit("change", this.index, newValue);
+    },
     updateXPosition() {
       if (!this.colorLine) return;
-      const clampedScalar = clamp(
-        this.scalarValue,
-        this.fullRange[0],
-        this.fullRange[1]
-      );
-      const lineLength = this.colorLine.clientWidth;
-      const maxPosition = lineLength - 10;
-      const calculatedPosition =
-        lineLength *
-          ((clampedScalar - this.fullRange[0]) /
-            (this.fullRange[1] - this.fullRange[0])) -
-        7; // this is half the width of the box;
-      this.xPosition =
-        calculatedPosition < maxPosition ? calculatedPosition : maxPosition;
+      this.xPosition = this.scalarToPosition(this.scalarValue);
     },
   },
   mounted() {
@@ -64,12 +68,26 @@ export default {
   },
   updated() {
     this.updateXPosition();
+
+    makeDraggable(
+      this.$el,
+      this.onDragSquare,
+      {
+        x: [-10, this.colorLine.clientWidth - 10],
+        y: [],
+      },
+      {
+        x: this.dataRange.map((value) => this.scalarToPosition(value)),
+        y: [],
+      }
+    );
   },
 };
 </script>
 
 <template>
   <div
+    ref="colorSquare"
     v-if="colorLine"
     :class="!dark ? 'color-square' : 'color-square dark'"
     :style="`left: ${xPosition}px; background-color: ${rgbString}`"
@@ -81,8 +99,8 @@ export default {
   position: absolute;
   top: 0px;
   margin-top: 10px;
-  height: 15px;
-  width: 15px;
+  height: 20px;
+  width: 20px;
   border: 3px solid black;
 }
 .color-square.dark {
@@ -90,9 +108,8 @@ export default {
 }
 .color-square::after {
   content: "\25B2";
-  font-size: 18px;
+  font-size: 16px;
   position: relative;
-  top: -22px;
-  left: -5%;
+  top: -20px;
 }
 </style>
