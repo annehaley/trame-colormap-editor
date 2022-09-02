@@ -2,9 +2,11 @@
 import ColorNode from "./ColorNode.vue";
 import { drawHistogram, drawGradient } from "../utils/canvasDrawing";
 import { HistogramData } from "../utils/types";
+import ColorNodeList from "./ColorNodeList.vue";
+import clamp from "../utils/clamp";
 
 export default {
-  components: { ColorNode },
+  components: { ColorNode, ColorNodeList },
   props: {
     value: {
       type: Array,
@@ -43,6 +45,11 @@ export default {
       let calculatedPosition =
         this.gradientLength *
         ((scalar - this.dataRange[0]) / this.rangeDifference);
+      calculatedPosition = clamp(
+        calculatedPosition,
+        -20,
+        this.gradientLength + 20
+      );
       calculatedPosition += 10; // +10 accounts for half the square width
       return calculatedPosition;
     },
@@ -112,6 +119,7 @@ export default {
         @change="updateSingleNode"
       />
     </div>
+    <color-node-list :nodes="colorNodes" :dark="dark" />
     <v-btn @click="update" class="update-btn">Update</v-btn>
   </div>
 </template>
