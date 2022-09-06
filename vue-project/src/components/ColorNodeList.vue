@@ -10,7 +10,21 @@ export default {
       default: false,
     },
   },
+  data() {
+    return {
+      selectedNodes: [],
+    };
+  },
   methods: {
+    nodeToTableItem(node, index) {
+      const rgb = node.slice(1).map((value) => value * 255);
+      return {
+        id: index,
+        value: node[0],
+        rgb: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
+        index,
+      };
+    },
     changeNodeValue(index, newValue) {
       const newList = [...this.nodes];
       newList[index][0] = parseInt(newValue);
@@ -25,26 +39,18 @@ export default {
       const newNode = [0, 0, 0, 0];
       const newList = [...this.nodes];
       newList.push(newNode);
+      this.selectedNodes = [this.nodeToTableItem(newNode, newList.length - 1)];
       this.$emit("change", newList);
     },
   },
   computed: {
     nodeList() {
-      return this.nodes.map((node, index) => {
-        const rgb = node.slice(1).map((value) => value * 255);
-        return {
-          id: index,
-          value: node[0],
-          rgb: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
-          index,
-        };
-      });
+      return this.nodes.map(this.nodeToTableItem);
     },
     headers() {
       return [
-        { text: "ID", value: "id", sortable: false, align: "start" },
-        { text: "value", value: "value", align: "center" },
         { text: "swatch", value: "rgb", sortable: false, align: "end" },
+        { text: "value", value: "value" },
         { text: "remove", value: "index", sortable: false, width: "50px" },
       ];
     },
@@ -55,6 +61,7 @@ export default {
 <template>
   <div>
     <v-data-table
+      v-model="selectedNodes"
       :items="nodeList"
       :headers="headers"
       :dark="dark"
@@ -65,6 +72,13 @@ export default {
       show-select
     >
       <!-- eslint-disable-next-line -->
+      <template #item.rgb="{ item }">
+        <div
+          :class="dark ? `color-square dark` : `color-square`"
+          :style="`background-color: ` + item.rgb"
+        />
+      </template>
+      <!-- eslint-disable-next-line -->
       <template #item.value="{ item }">
         <v-text-field
           :value="item.value"
@@ -74,13 +88,6 @@ export default {
           type="number"
           @change="(newValue) => changeNodeValue(item.id, newValue)"
         ></v-text-field>
-      </template>
-      <!-- eslint-disable-next-line -->
-      <template #item.rgb="{ item }">
-        <div
-          :class="dark ? `color-square dark` : `color-square`"
-          :style="`background-color: ` + item.rgb"
-        />
       </template>
       <!-- eslint-disable-next-line -->
       <template #item.index="{ item }">
@@ -100,7 +107,6 @@ export default {
   width: 70px;
   padding: 0;
   margin: 0;
-  margin-left: calc(50% - 35px);
 }
 .color-square {
   margin-top: 10px;
