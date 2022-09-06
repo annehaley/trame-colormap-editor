@@ -54,7 +54,7 @@ export default {
   },
   methods: {
     onDragSquare() {
-      const scalar = this.positionToScalar(this.$el.offsetLeft);
+      const scalar = Math.round(this.positionToScalar(this.$el.offsetLeft));
       const newValue = [scalar, ...this.rgbValue];
       this.$emit("change", this.index, newValue);
     },

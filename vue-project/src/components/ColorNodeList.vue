@@ -10,7 +10,13 @@ export default {
       default: false,
     },
   },
-  methods: {},
+  methods: {
+    changeNodeValue(index, newValue) {
+      const newNode = this.nodes[index];
+      newNode[0] = parseInt(newValue);
+      this.$emit("change", index, newNode);
+    },
+  },
   computed: {
     nodeList() {
       return this.nodes.map((node, index) => {
@@ -30,9 +36,6 @@ export default {
       ];
     },
   },
-  mounted() {
-    console.log(this.nodeList);
-  },
 };
 </script>
 
@@ -49,6 +52,17 @@ export default {
       show-select
     >
       <!-- eslint-disable-next-line -->
+      <template #item.value="{ item }">
+        <v-text-field
+          :value="item.value"
+          class="value-input"
+          hide-details
+          single-line
+          type="number"
+          @change="(newValue) => changeNodeValue(item.id, newValue)"
+        ></v-text-field>
+      </template>
+      <!-- eslint-disable-next-line -->
       <template #item.rgb="{ item }">
         <div
           :class="dark ? `color-square dark` : `color-square`"
@@ -60,6 +74,12 @@ export default {
 </template>
 
 <style scoped>
+.value-input {
+  width: 70px;
+  padding: 0;
+  margin: 0;
+  margin-left: calc(50% - 35px);
+}
 .color-square {
   margin-top: 10px;
   height: 25px;

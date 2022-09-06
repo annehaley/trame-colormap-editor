@@ -83,6 +83,7 @@ export default {
     },
     updateSingleNode(nodeIndex, newValue) {
       this.colorNodes[nodeIndex] = newValue;
+      this.colorNodes = [...this.colorNodes];
       this.render();
     },
     update() {
@@ -119,7 +120,11 @@ export default {
         @change="updateSingleNode"
       />
     </div>
-    <color-node-list :nodes="colorNodes" :dark="dark" />
+    <color-node-list
+      :nodes="colorNodes"
+      :dark="dark"
+      @change="updateSingleNode"
+    />
     <v-btn @click="update" class="update-btn">Update</v-btn>
   </div>
 </template>
