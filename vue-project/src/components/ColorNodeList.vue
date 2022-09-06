@@ -12,9 +12,14 @@ export default {
   },
   methods: {
     changeNodeValue(index, newValue) {
-      const newNode = this.nodes[index];
-      newNode[0] = parseInt(newValue);
-      this.$emit("change", index, newNode);
+      const newList = [...this.nodes];
+      newList[index][0] = parseInt(newValue);
+      this.$emit("change", newList);
+    },
+    removeNode(index) {
+      const newList = [...this.nodes];
+      newList.splice(index, 1);
+      this.$emit("change", newList);
     },
   },
   computed: {
@@ -25,6 +30,7 @@ export default {
           id: index,
           value: node[0],
           rgb: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
+          index,
         };
       });
     },
@@ -33,6 +39,7 @@ export default {
         { text: "ID", value: "id", sortable: false, align: "start" },
         { text: "value", value: "value", align: "center" },
         { text: "swatch", value: "rgb", sortable: false, align: "end" },
+        { text: "remove", value: "index", sortable: false, width: "50px" },
       ];
     },
   },
@@ -68,6 +75,10 @@ export default {
           :class="dark ? `color-square dark` : `color-square`"
           :style="`background-color: ` + item.rgb"
         />
+      </template>
+      <!-- eslint-disable-next-line -->
+      <template #item.index="{ item }">
+        <v-icon @click="() => removeNode(item.index)"> mdi-trash-can </v-icon>
       </template>
     </v-data-table>
   </div>

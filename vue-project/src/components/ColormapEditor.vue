@@ -86,6 +86,10 @@ export default {
       this.colorNodes = [...this.colorNodes];
       this.render();
     },
+    updateNodeList(newList) {
+      this.colorNodes = newList;
+      this.render();
+    },
     update() {
       this.$emit("input", [...this.colorNodes]);
     },
@@ -123,7 +127,7 @@ export default {
     <color-node-list
       :nodes="colorNodes"
       :dark="dark"
-      @change="updateSingleNode"
+      @change="updateNodeList"
     />
     <v-btn @click="update" class="update-btn">Update</v-btn>
   </div>
