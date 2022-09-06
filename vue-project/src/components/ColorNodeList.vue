@@ -21,6 +21,12 @@ export default {
       newList.splice(index, 1);
       this.$emit("change", newList);
     },
+    addNode() {
+      const newNode = [0, 0, 0, 0];
+      const newList = [...this.nodes];
+      newList.push(newNode);
+      this.$emit("change", newList);
+    },
   },
   computed: {
     nodeList() {
@@ -79,6 +85,11 @@ export default {
       <!-- eslint-disable-next-line -->
       <template #item.index="{ item }">
         <v-icon @click="() => removeNode(item.index)"> mdi-trash-can </v-icon>
+      </template>
+      <template #footer>
+        <v-btn small style="width: 100%" @click="addNode">
+          + Add control point
+        </v-btn>
       </template>
     </v-data-table>
   </div>

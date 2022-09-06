@@ -129,6 +129,7 @@ export default {
       :dark="dark"
       @change="updateNodeList"
     />
+    <br />
     <v-btn @click="update" class="update-btn">Update</v-btn>
   </div>
 </template>
