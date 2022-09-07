@@ -149,7 +149,7 @@ export default {
           <v-card
             ref="colorPicker"
             class="color-editor-pane"
-            v-if="visibleColorPicker == item.id"
+            v-if="selectedNodes.length == 1 && visibleColorPicker == item.id"
           >
             <v-lazy>
               <v-color-picker
