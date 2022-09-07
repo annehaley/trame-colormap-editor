@@ -14,12 +14,11 @@ export default {
     return {
       selectedNodes: [],
       visibleColorPicker: undefined,
-      colorPickerWidth: undefined,
+      colorPickerWidth: 300,
       colorPickerValue: {
         r: 255,
         g: 0,
         b: 0,
-        a: 1,
       },
     };
   },
@@ -40,7 +39,6 @@ export default {
         r: rgb[0],
         g: rgb[1],
         b: rgb[2],
-        a: 1,
       };
     },
     changeNodeValue(index, newValue) {
@@ -95,14 +93,14 @@ export default {
     selectedNodes() {
       if (this.selectedNodes.length == 1) {
         this.visibleColorPicker = this.selectedNodes[0].id;
-        if (this.$refs.colorPicker) {
-          this.$nextTick(() => {
+        this.colorPickerValue = this.nodeIndexToColorPickerValue(
+          this.nodes[this.visibleColorPicker]
+        );
+        this.$nextTick(() => {
+          if (this.$refs.colorPicker) {
             this.colorPickerWidth = this.$refs.colorPicker.$el.clientWidth;
-            this.colorPickerValue = this.nodeIndexToColorPickerValue(
-              this.nodes[this.visibleColorPicker]
-            );
-          });
-        }
+          }
+        });
       } else if (this.selectedNodes.length == 0) {
         this.visibleColorPicker = undefined;
       }
@@ -153,12 +151,15 @@ export default {
             class="color-editor-pane"
             v-if="visibleColorPicker == item.id"
           >
-            <v-color-picker
-              :value="colorPickerValue"
-              canvas-height="65px"
-              :width="`${colorPickerWidth}`"
-              @input="updateColorOfSelectedNode"
-            />
+            <v-lazy>
+              <v-color-picker
+                :value="colorPickerValue"
+                canvas-height="65px"
+                :hide-canvas="colorPickerValue === undefined"
+                :width="`${colorPickerWidth}`"
+                @input="updateColorOfSelectedNode"
+              />
+            </v-lazy>
           </v-card>
         </div>
       </template>
@@ -206,8 +207,8 @@ export default {
 .color-editor-pane {
   position: absolute;
   top: 35px;
-  left: 130px;
-  width: calc(100% - 135px);
+  left: 120px;
+  width: calc(100% - 125px);
   height: calc(100% - 40px);
   background-color: inherit;
   z-index: 2;
@@ -229,7 +230,6 @@ export default {
   padding: 5px 10px;
 }
 .v-btn.v-btn--icon.v-btn--round.v-size--small,
-.v-color-picker__alpha,
 .v-color-picker__dot {
   display: none;
 }
