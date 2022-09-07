@@ -13,6 +13,14 @@ export default {
   data() {
     return {
       selectedNodes: [],
+      visibleColorPicker: undefined,
+      colorPickerWidth: undefined,
+      colorPickerValue: {
+        r: 255,
+        g: 0,
+        b: 0,
+        a: 1,
+      },
     };
   },
   methods: {
@@ -23,6 +31,16 @@ export default {
         value: node[0],
         rgb: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
         index,
+      };
+    },
+    nodeIndexToColorPickerValue(node) {
+      const rgb = node.slice(1).map((value) => value * 255);
+      // TODO: change based on interpolation mode
+      return {
+        r: rgb[0],
+        g: rgb[1],
+        b: rgb[2],
+        a: 1,
       };
     },
     changeNodeValue(index, newValue) {
@@ -42,6 +60,18 @@ export default {
       this.selectedNodes = [this.nodeToTableItem(newNode, newList.length - 1)];
       this.$emit("change", newList);
     },
+    updateColorOfSelectedNode(newValue) {
+      this.colorPickerValue = newValue;
+      const newList = [...this.nodes];
+      const newRGB = Object.values(newValue).map(
+        (ratio: number) => ratio / 255
+      );
+      newList[this.selectedNodes[0].index] = [
+        this.selectedNodes[0].value,
+        ...newRGB,
+      ];
+      this.$emit("change", newList);
+    },
   },
   computed: {
     nodeList() {
@@ -49,10 +79,33 @@ export default {
     },
     headers() {
       return [
-        { text: "swatch", value: "rgb", sortable: false, align: "end" },
+        {
+          text: "swatch",
+          value: "rgb",
+          sortable: false,
+          align: "end",
+          width: "50px",
+        },
         { text: "value", value: "value" },
         { text: "remove", value: "index", sortable: false, width: "50px" },
       ];
+    },
+  },
+  watch: {
+    selectedNodes() {
+      if (this.selectedNodes.length == 1) {
+        this.visibleColorPicker = this.selectedNodes[0].id;
+        if (this.$refs.colorPicker) {
+          this.$nextTick(() => {
+            this.colorPickerWidth = this.$refs.colorPicker.$el.clientWidth;
+            this.colorPickerValue = this.nodeIndexToColorPickerValue(
+              this.nodes[this.visibleColorPicker]
+            );
+          });
+        }
+      } else if (this.selectedNodes.length == 0) {
+        this.visibleColorPicker = undefined;
+      }
     },
   },
 };
@@ -60,23 +113,54 @@ export default {
 
 <template>
   <div>
+    <div id="range-editor" v-if="selectedNodes.length > 1">
+      <v-card class="pa-3 mb-3"> Edit range for multiple nodes </v-card>
+    </div>
+
     <v-data-table
       v-model="selectedNodes"
+      ref="table"
       :items="nodeList"
       :headers="headers"
       :dark="dark"
       sort-by="value"
       must-sort
-      fixed-headers
+      fixed-header
       hide-default-footer
       show-select
+      height="200px"
+      dense
     >
       <!-- eslint-disable-next-line -->
       <template #item.rgb="{ item }">
-        <div
-          :class="dark ? `color-square dark` : `color-square`"
-          :style="`background-color: ` + item.rgb"
-        />
+        <div>
+          <div
+            :id="'color-square-' + item.id"
+            :class="dark ? `color-square dark` : `color-square`"
+            :style="`background-color: ` + item.rgb"
+            @click="
+              () => {
+                if (selectedNodes.map((node) => node.id).includes(item.id)) {
+                  selectedNodes = [];
+                } else {
+                  selectedNodes = [item];
+                }
+              }
+            "
+          ></div>
+          <v-card
+            ref="colorPicker"
+            class="color-editor-pane"
+            v-if="visibleColorPicker == item.id"
+          >
+            <v-color-picker
+              :value="colorPickerValue"
+              canvas-height="65px"
+              :width="`${colorPickerWidth}`"
+              @input="updateColorOfSelectedNode"
+            />
+          </v-card>
+        </div>
       </template>
       <!-- eslint-disable-next-line -->
       <template #item.value="{ item }">
@@ -91,7 +175,9 @@ export default {
       </template>
       <!-- eslint-disable-next-line -->
       <template #item.index="{ item }">
-        <v-icon @click="() => removeNode(item.index)"> mdi-trash-can </v-icon>
+        <v-icon @click="() => removeNode(item.index)" style="float: right">
+          mdi-trash-can
+        </v-icon>
       </template>
       <template #footer>
         <v-btn small style="width: 100%" @click="addNode">
@@ -102,14 +188,13 @@ export default {
   </div>
 </template>
 
-<style scoped>
+<style>
 .value-input {
   width: 70px;
   padding: 0;
   margin: 0;
 }
 .color-square {
-  margin-top: 10px;
   height: 25px;
   width: 25px;
   border: 3px solid black;
@@ -117,5 +202,35 @@ export default {
 }
 .color-square.dark {
   border: 3px solid white;
+}
+.color-editor-pane {
+  position: absolute;
+  top: 35px;
+  left: 130px;
+  width: calc(100% - 135px);
+  height: calc(100% - 40px);
+  background-color: inherit;
+  z-index: 2;
+  padding: 5px;
+  text-align: center;
+}
+.v-data-table__wrapper {
+  position: relative;
+}
+.v-color-picker__preview {
+  width: 100%;
+  margin-right: 20px;
+}
+.v-color-picker__hue,
+.v-color-picker__edit {
+  margin: 3px !important;
+}
+.v-color-picker__controls {
+  padding: 5px 10px;
+}
+.v-btn.v-btn--icon.v-btn--round.v-size--small,
+.v-color-picker__alpha,
+.v-color-picker__dot {
+  display: none;
 }
 </style>
