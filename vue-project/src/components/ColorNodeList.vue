@@ -1,12 +1,10 @@
 <script lang="ts">
+import RangeEditor from "./RangeEditor.vue";
 export default {
+  components: { RangeEditor },
   props: {
     nodes: {
       type: Array,
-      required: true,
-    },
-    getFullRange: {
-      type: Function,
       required: true,
     },
     dark: {
@@ -26,10 +24,14 @@ export default {
       },
       fullRange: undefined,
       tableRange: undefined,
-      filteredNodeList: undefined,
+      filteredNodeList: [],
     };
   },
   methods: {
+    getNodesRange() {
+      const values = this.nodeList.map((node) => node.value);
+      return [Math.min(...values), Math.max(...values)];
+    },
     nodeToTableItem(node, index) {
       const rgb = node.slice(1).map((value) => value * 255);
       return {
@@ -58,7 +60,6 @@ export default {
         if (single) this.selectedNodes = [item];
         else this.selectedNodes.push(item);
       }
-      console.log(this.selectedNodes);
     },
     toggleSelectAll() {
       if (this.selectedNodes.length == this.filteredNodeList.length) {
@@ -144,10 +145,12 @@ export default {
       this.filteredNodeList = this.nodeList.filter(
         (node) => node.value >= shownRange[0] && node.value <= shownRange[1]
       );
+      this.fullRange = this.getNodesRange();
+      this.tableRange = this.fullRange;
     },
   },
   mounted() {
-    this.fullRange = this.getFullRange();
+    this.fullRange = this.getNodesRange();
     this.tableRange = this.fullRange;
   },
 };
@@ -157,7 +160,7 @@ export default {
   <v-data-table
     v-model="selectedNodes"
     ref="table"
-    :items="filteredNodeList || nodeList"
+    :items="filteredNodeList"
     :headers="headers"
     :dark="dark"
     sort-by="value"
@@ -195,7 +198,7 @@ export default {
             style="width: 60px"
             :min="fullRange[0]"
             :max="tableRange[1]"
-            @change="$set(tableRange, 0, $event)"
+            @input="$set(tableRange, 0, $event)"
           ></v-text-field>
           ...
           <v-text-field
@@ -207,7 +210,7 @@ export default {
             style="width: 60px"
             :min="tableRange[0]"
             :max="fullRange[1]"
-            @change="$set(tableRange, 1, $event)"
+            @input="$set(tableRange, 1, $event)"
           ></v-text-field>
         </div>
       </div>
@@ -287,16 +290,19 @@ export default {
           {{ selectedNodes.length > 0 ? "(" + selectedNodes.length + ")" : "" }}
         </v-btn>
       </div>
-      <v-card :dark="dark" v-if="selectedNodes.length > 1" class="mt-3 pa-3">
-        Adjust range for selected nodes
-      </v-card>
+      <range-editor
+        v-if="fullRange"
+        :selectedNodes="selectedNodes"
+        :dark="dark"
+        :fullRange="fullRange"
+      />
     </template>
   </v-data-table>
 </template>
 
 <style>
 tr.selected {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.1);
 }
 tr.selected.dark {
   background-color: rgba(255, 255, 255, 0.2);
