@@ -126,6 +126,7 @@ export default {
     </div>
     <color-node-list
       :nodes="colorNodes"
+      :getFullRange="getFullRange"
       :dark="dark"
       @change="updateNodeList"
     />
