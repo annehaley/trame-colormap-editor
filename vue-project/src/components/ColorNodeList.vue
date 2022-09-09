@@ -85,7 +85,6 @@ export default {
           width: "50px",
         },
         { text: "value", value: "value" },
-        { text: "remove", value: "index", sortable: false, width: "50px" },
       ];
     },
   },
@@ -125,7 +124,6 @@ export default {
       must-sort
       fixed-header
       hide-default-footer
-      show-select
       height="200px"
       dense
     >
@@ -150,6 +148,7 @@ export default {
             ref="colorPicker"
             class="color-editor-pane"
             v-if="selectedNodes.length == 1 && visibleColorPicker == item.id"
+            v-click-outside="() => (selectedNodes = [])"
           >
             <v-lazy>
               <v-color-picker
@@ -173,12 +172,6 @@ export default {
           type="number"
           @change="(newValue) => changeNodeValue(item.id, newValue)"
         ></v-text-field>
-      </template>
-      <!-- eslint-disable-next-line -->
-      <template #item.index="{ item }">
-        <v-icon @click="() => removeNode(item.index)" style="float: right">
-          mdi-trash-can
-        </v-icon>
       </template>
       <template #footer>
         <v-btn small style="width: 100%" @click="addNode">
@@ -207,8 +200,8 @@ export default {
 .color-editor-pane {
   position: absolute;
   top: 35px;
-  left: 120px;
-  width: calc(100% - 125px);
+  left: 70px;
+  width: calc(100% - 75px);
   height: calc(100% - 40px);
   background-color: inherit;
   z-index: 2;
