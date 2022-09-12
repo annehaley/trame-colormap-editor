@@ -15,11 +15,11 @@ export default defineComponent({
       range: [-2048.0, 3071.0],
     };
     const value = [
-      [-2369, 1, 0, 0],
+      [-2200, 1, 0, 0],
       [-2048, 0, 1, 0],
       [511.5, 0, 0, 1],
       [3071, 0, 0, 0],
-      [3392, 1, 1, 1],
+      [3300, 1, 1, 1],
     ];
 
     return {
@@ -31,17 +31,35 @@ export default defineComponent({
 </script>
 
 <template>
-  <div class="container">
-    <colormap-editor :histogram-data="histogramData" :value="value" dark />
+  <div id="app">
+    <v-app>
+      <div class="d-flex">
+        <div class="container-1">
+          <colormap-editor
+            :histogram-data="histogramData"
+            :value="value"
+            dark
+          />
+        </div>
+        <div class="container-2">
+          <colormap-editor :histogram-data="histogramData" :value="value" />
+        </div>
+      </div>
+    </v-app>
   </div>
 </template>
 
 <style scoped>
-.container {
+.container-1 {
+  margin: 10px;
+  padding: 10px;
+  width: 400px;
+  background-color: black;
+}
+.container-2 {
   margin: 10px;
   padding: 10px;
   border: 1px dashed black;
-  width: 400px;
-  background-color: black;
+  width: 700px;
 }
 </style>

@@ -1,4 +1,5 @@
 import { HistogramData } from "./types";
+import clamp from "./clamp";
 
 const BAR_GAP = 2;
 
@@ -50,8 +51,11 @@ export function drawGradient(
   const gradient = context.createLinearGradient(0, 0, width, 0);
   colorNodes.forEach((node) => {
     const scalarValue = Math.floor(node[0]);
-    const proportion =
-      (scalarValue - fullRange[0]) / (fullRange[1] - fullRange[0]);
+    const proportion = clamp(
+      (scalarValue - fullRange[0]) / (fullRange[1] - fullRange[0]),
+      0,
+      1
+    );
     const rgb = node.slice(1).map((value) => value * 255);
     gradient.addColorStop(proportion, `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`);
   });

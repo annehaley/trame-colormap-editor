@@ -2,9 +2,11 @@
 import ColorNode from "./ColorNode.vue";
 import { drawHistogram, drawGradient } from "../utils/canvasDrawing";
 import { HistogramData } from "../utils/types";
+import ColorNodeList from "./ColorNodeList.vue";
+import clamp from "../utils/clamp";
 
 export default {
-  components: { ColorNode },
+  components: { ColorNode, ColorNodeList },
   props: {
     value: {
       type: Array,
@@ -43,6 +45,11 @@ export default {
       let calculatedPosition =
         this.gradientLength *
         ((scalar - this.dataRange[0]) / this.rangeDifference);
+      calculatedPosition = clamp(
+        calculatedPosition,
+        -20,
+        this.gradientLength + 20
+      );
       calculatedPosition += 10; // +10 accounts for half the square width
       return calculatedPosition;
     },
@@ -76,6 +83,11 @@ export default {
     },
     updateSingleNode(nodeIndex, newValue) {
       this.colorNodes[nodeIndex] = newValue;
+      this.colorNodes = [...this.colorNodes];
+      this.render();
+    },
+    updateNodeList(newList) {
+      this.colorNodes = newList;
       this.render();
     },
     update() {
@@ -112,11 +124,17 @@ export default {
         @change="updateSingleNode"
       />
     </div>
+    <color-node-list
+      :nodes="colorNodes"
+      :dark="dark"
+      @change="updateNodeList"
+    />
+    <br />
     <v-btn @click="update" class="update-btn">Update</v-btn>
   </div>
 </template>
 
-<style scoped>
+<style>
 .dark {
   color: white !important;
 }
@@ -147,10 +165,9 @@ export default {
 }
 .color-line {
   z-index: 2;
-  margin-top: 15px;
   outline: 1px solid black;
-  margin-bottom: 50px;
   position: relative;
+  margin-bottom: 15px;
 }
 .color-line.dark {
   outline: 1px solid white;
