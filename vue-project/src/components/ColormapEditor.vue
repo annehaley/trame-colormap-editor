@@ -154,20 +154,28 @@ export default {
 }
 .histogram-labels {
   display: flex;
+  position: absolute;
+  width: 100%;
+  top: 100px;
+  z-index: 3;
   justify-content: space-between;
+  font-weight: 900;
+  -webkit-text-fill-color: white;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
 }
 .gradient-box {
-  height: 25px;
+  height: 45px;
   width: 100%;
   position: absolute;
-  top: -20px;
+  top: -30px;
   z-index: -1;
 }
 .color-line {
   z-index: 2;
   outline: 1px solid black;
   position: relative;
-  margin-bottom: 15px;
+  margin: 20px 0px;
 }
 .color-line.dark {
   outline: 1px solid white;
