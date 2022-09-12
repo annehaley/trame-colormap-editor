@@ -39,9 +39,21 @@ export default {
     return {
       colorLine: undefined,
       colorNodes: this.value,
+      selectedNodes: [],
+      visibleColorPicker: undefined,
     };
   },
   methods: {
+    nodeToTableItem(node, index) {
+      const rgb = node.slice(1).map((value) => value * 255);
+      return {
+        id: index,
+        value: node[0],
+        rgbString: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
+        rgb,
+        index,
+      };
+    },
     scalarToPosition(scalar) {
       let calculatedPosition =
         this.gradientLength *
@@ -84,8 +96,18 @@ export default {
     },
     createNodeAtClick(event) {
       const newNodeValue = Math.round(this.positionToScalar(event.layerX));
-      this.colorNodes.push([newNodeValue, 0, 0, 0]);
+      const newNode = [newNodeValue, 0, 0, 0];
+      this.colorNodes = [...this.colorNodes, newNode];
+      this.selectedNodes = [
+        this.nodeToTableItem(newNode, this.colorNodes.length - 1),
+      ];
       this.render();
+    },
+    updateSelectedNodes(selected) {
+      this.selectedNodes = selected;
+    },
+    updateVisibleColorPicker(visibleColorPicker) {
+      this.visibleColorPicker = visibleColorPicker;
     },
     updateSingleNode(nodeIndex, newValue) {
       this.colorNodes[nodeIndex] = newValue;
@@ -143,12 +165,18 @@ export default {
         :scalarToPosition="scalarToPosition"
         :positionToScalar="positionToScalar"
         @change="updateSingleNode"
+        @pick="updateVisibleColorPicker"
       />
     </div>
     <color-node-list
       :nodes="colorNodes"
+      :selectedNodes="selectedNodes"
+      :visibleColorPicker="visibleColorPicker"
+      :nodeToTableItem="nodeToTableItem"
       :dark="dark"
       @change="updateNodeList"
+      @select="updateSelectedNodes"
+      @pick="updateVisibleColorPicker"
     />
     <br />
     <v-btn @click="update" class="update-btn">Update</v-btn>

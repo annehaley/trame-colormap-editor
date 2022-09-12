@@ -91,6 +91,7 @@ export default {
     v-if="colorLine"
     :class="!dark ? 'color-square' : 'color-square dark'"
     :style="`left: ${xPosition}px; background-color: ${rgbString}`"
+    @click="() => $emit('pick', index)"
   />
 </template>
 
