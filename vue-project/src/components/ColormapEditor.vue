@@ -4,9 +4,10 @@ import { drawHistogram, drawGradient } from "../utils/canvasDrawing";
 import { HistogramData } from "../utils/types";
 import ColorNodeList from "./ColorNodeList.vue";
 import clamp from "../utils/clamp";
+import InfoTooltip from "./InfoTooltip.vue";
 
 export default {
-  components: { ColorNode, ColorNodeList },
+  components: { ColorNode, ColorNodeList, InfoTooltip },
   props: {
     value: {
       type: Array,
@@ -81,6 +82,11 @@ export default {
         this.dataRange[0]
       );
     },
+    createNodeAtClick(event) {
+      const newNodeValue = Math.round(this.positionToScalar(event.layerX));
+      this.colorNodes.push([newNodeValue, 0, 0, 0]);
+      this.render();
+    },
     updateSingleNode(nodeIndex, newValue) {
       this.colorNodes[nodeIndex] = newValue;
       this.colorNodes = [...this.colorNodes];
@@ -104,9 +110,24 @@ export default {
 </script>
 
 <template>
-  <div :class="!dark ? 'widget-container' : 'widget-container dark'">
+  <div
+    ref="container"
+    :class="!dark ? 'widget-container' : 'widget-container dark'"
+  >
+    <info-tooltip
+      v-if="colorLine"
+      :dark="dark"
+      :container="$refs.container"
+      :positionToScalar="positionToScalar"
+      :histogramData="histogramData"
+      :targets="[$refs.histogram, $refs.histogramLabels, $refs.colorLine]"
+    />
     <canvas ref="histogram" class="histogram-canvas indented" />
-    <div ref="histogramLabels" class="histogram-labels indented" />
+    <div
+      ref="histogramLabels"
+      class="histogram-labels indented"
+      @click="createNodeAtClick"
+    />
     <div ref="colorLine" :class="!dark ? 'color-line' : 'color-line dark'">
       <canvas ref="gradientBox" class="gradient-box" />
       <color-node
