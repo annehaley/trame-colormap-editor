@@ -37,7 +37,8 @@ export default {
       return {
         id: index,
         value: node[0],
-        rgb: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
+        rgbString: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
+        rgb,
         index,
       };
     },
@@ -114,6 +115,13 @@ export default {
         this.selectedNodes[0].value,
         ...newRGB,
       ];
+      this.$emit("change", newList);
+    },
+    updateList(newItems) {
+      const newList = [...this.nodes];
+      newItems.forEach((item) => {
+        newList[item.id] = [item.value, ...item.rgb.map((v) => v / 255)];
+      });
       this.$emit("change", newList);
     },
   },
@@ -228,7 +236,7 @@ export default {
           <div
             :id="'color-square-' + item.id"
             :class="dark ? `color-square dark` : `color-square`"
-            :style="`background-color: ` + item.rgb"
+            :style="`background-color: ` + item.rgbString"
             @click="
               (e) => {
                 e.stopPropagation();
@@ -295,6 +303,7 @@ export default {
         :selectedNodes="selectedNodes"
         :dark="dark"
         :fullRange="fullRange"
+        @change="updateList"
       />
     </template>
   </v-data-table>

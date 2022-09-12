@@ -126,7 +126,6 @@ export default {
     </div>
     <color-node-list
       :nodes="colorNodes"
-      :getFullRange="getFullRange"
       :dark="dark"
       @change="updateNodeList"
     />
@@ -135,7 +134,7 @@ export default {
   </div>
 </template>
 
-<style scoped>
+<style>
 .dark {
   color: white !important;
 }
@@ -166,10 +165,9 @@ export default {
 }
 .color-line {
   z-index: 2;
-  margin-top: 15px;
   outline: 1px solid black;
-  margin-bottom: 50px;
   position: relative;
+  margin-bottom: 15px;
 }
 .color-line.dark {
   outline: 1px solid white;
