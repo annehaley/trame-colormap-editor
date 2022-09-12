@@ -283,10 +283,10 @@ export default {
               ? "Select"
               : "Deselect"
           }}
-          all shown
+          all
         </v-btn>
         <v-btn small :disabled="selectedNodes.length > 0" @click="addNode">
-          + Add control point
+          + New
         </v-btn>
         <!-- <v-btn small :disabled="selectedNodes.length < 2"> Adjust range </v-btn> -->
         <v-btn
@@ -294,7 +294,7 @@ export default {
           :disabled="selectedNodes.length == 0"
           @click="removeSelectedNodes"
         >
-          Delete selected
+          Delete
           {{ selectedNodes.length > 0 ? "(" + selectedNodes.length + ")" : "" }}
         </v-btn>
       </div>
