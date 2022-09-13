@@ -100,7 +100,11 @@ export default {
       Bin range: {{ binInfo.range[0] }}...{{ binInfo.range[1] }}
     </div>
     <div v-if="binInfo" class="caption">Bin count: {{ binInfo.count }}</div>
-    <div v-else class="caption">Click to add control point</div>
+    <div v-else class="caption">
+      Click to create new control point
+      <br />
+      Double click existing control point to edit color
+    </div>
   </v-card>
 </template>
 

@@ -258,6 +258,12 @@ export default {
             class="color-editor-pane"
             v-if="visibleColorPicker == item.id"
           >
+            <v-icon
+              style="float: right"
+              @click="() => $emit('pick', undefined)"
+            >
+              mdi-close
+            </v-icon>
             <v-lazy>
               <v-color-picker
                 :value="colorPickerValue"

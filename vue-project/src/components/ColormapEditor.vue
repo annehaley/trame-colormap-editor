@@ -162,6 +162,7 @@ export default {
         :colorLine="colorLine"
         :dataRange="dataRange"
         :dark="dark"
+        :visibleColorPicker="visibleColorPicker"
         :scalarToPosition="scalarToPosition"
         :positionToScalar="positionToScalar"
         @change="updateSingleNode"

@@ -27,6 +27,10 @@ export default {
       type: Array,
       required: true,
     },
+    visibleColorPicker: {
+      type: Number || undefined,
+      default: undefined,
+    },
     scalarToPosition: {
       type: Function,
       required: true,
@@ -62,6 +66,13 @@ export default {
       if (!this.colorLine) return;
       this.xPosition = this.scalarToPosition(this.scalarValue);
     },
+    toggleColorPicker(index) {
+      if (this.visibleColorPicker !== index) {
+        this.$emit("pick", index);
+      } else {
+        this.$emit("pick", undefined);
+      }
+    },
   },
   mounted() {
     this.updateXPosition();
@@ -91,7 +102,7 @@ export default {
     v-if="colorLine"
     :class="!dark ? 'color-square' : 'color-square dark'"
     :style="`left: ${xPosition}px; background-color: ${rgbString}`"
-    @click="() => $emit('pick', index)"
+    @dblclick="() => toggleColorPicker(index)"
   />
 </template>
 
