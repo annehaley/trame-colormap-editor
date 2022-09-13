@@ -101,9 +101,11 @@ export default {
     </div>
     <div v-if="binInfo" class="caption">Bin count: {{ binInfo.count }}</div>
     <div v-else class="caption">
-      Click to create new control point
+      Double click gradient bar to create new control point
       <br />
       Double click existing control point to edit color
+      <br />
+      Drag to select range and filter table
     </div>
   </v-card>
 </template>

@@ -5,6 +5,7 @@ import { HistogramData } from "../utils/types";
 import ColorNodeList from "./ColorNodeList.vue";
 import clamp from "../utils/clamp";
 import InfoTooltip from "./InfoTooltip.vue";
+import { listenDragSelection } from "../utils/drag";
 
 export default {
   components: { ColorNode, ColorNodeList, InfoTooltip },
@@ -41,6 +42,7 @@ export default {
       colorNodes: this.value,
       selectedNodes: [],
       visibleColorPicker: undefined,
+      filterRange: undefined,
     };
   },
   methods: {
@@ -68,9 +70,9 @@ export default {
     },
     positionToScalar(position) {
       position -= 10; // -10 accounts for half the square width
-      return (
+      return Math.round(
         (position / this.gradientLength) * this.rangeDifference +
-        this.dataRange[0]
+          this.dataRange[0]
       );
     },
     getFullRange() {
@@ -103,6 +105,9 @@ export default {
       ];
       this.render();
     },
+    updateFilterRange(newRange) {
+      this.filterRange = newRange;
+    },
     updateSelectedNodes(selected) {
       this.selectedNodes = selected;
     },
@@ -123,6 +128,14 @@ export default {
     },
   },
   mounted() {
+    listenDragSelection(
+      this.$refs.histogramLabels,
+      (startPos: number, endPos: number) => {
+        const startValue = this.positionToScalar(startPos);
+        const endValue = this.positionToScalar(endPos);
+        this.filterRange = [startValue, endValue];
+      }
+    );
     this.render();
   },
   updated() {
@@ -148,7 +161,7 @@ export default {
     <div
       ref="histogramLabels"
       class="histogram-labels indented"
-      @click="createNodeAtClick"
+      @dblclick="createNodeAtClick"
     />
     <div ref="colorLine" :class="!dark ? 'color-line' : 'color-line dark'">
       <canvas ref="gradientBox" class="gradient-box" />
@@ -167,6 +180,7 @@ export default {
         :positionToScalar="positionToScalar"
         @change="updateSingleNode"
         @pick="updateVisibleColorPicker"
+        @updaterange="updateFilterRange"
       />
     </div>
     <color-node-list
@@ -174,6 +188,7 @@ export default {
       :selectedNodes="selectedNodes"
       :visibleColorPicker="visibleColorPicker"
       :nodeToTableItem="nodeToTableItem"
+      :filterRange="filterRange"
       :dark="dark"
       @change="updateNodeList"
       @select="updateSelectedNodes"

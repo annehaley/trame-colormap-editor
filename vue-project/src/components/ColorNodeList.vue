@@ -15,6 +15,10 @@ export default {
       type: Number || undefined,
       default: undefined,
     },
+    filterRange: {
+      type: Array || undefined,
+      default: undefined,
+    },
     nodeToTableItem: {
       type: Function,
       required: true,
@@ -164,6 +168,9 @@ export default {
         });
       }
     },
+    filterRange() {
+      this.tableRange = this.filterRange;
+    },
   },
   mounted() {
     this.fullRange = this.getNodesRange();
@@ -229,6 +236,9 @@ export default {
             :max="fullRange[1]"
             @input="$set(tableRange, 1, $event)"
           ></v-text-field>
+          <v-icon @click="tableRange = fullRange">
+            mdi-arrow-expand-vertical
+          </v-icon>
         </div>
       </div>
     </template>
