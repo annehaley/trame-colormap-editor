@@ -81,7 +81,9 @@ export function listenDragSelection(
     if (mousedownLocation !== undefined) {
       const lower = Math.min(mousedownLocation, e.offsetX);
       const upper = Math.max(mousedownLocation, e.offsetX);
-      callback(lower, upper);
+      if (lower != upper) {
+        callback(lower, upper);
+      }
     }
   }
 
