@@ -4,9 +4,11 @@ import { drawHistogram, drawGradient } from "../utils/canvasDrawing";
 import { HistogramData } from "../utils/types";
 import ColorNodeList from "./ColorNodeList.vue";
 import clamp from "../utils/clamp";
+import InfoTooltip from "./InfoTooltip.vue";
+import { listenDragSelection } from "../utils/drag";
 
 export default {
-  components: { ColorNode, ColorNodeList },
+  components: { ColorNode, ColorNodeList, InfoTooltip },
   props: {
     value: {
       type: Array,
@@ -38,9 +40,22 @@ export default {
     return {
       colorLine: undefined,
       colorNodes: this.value,
+      selectedNodes: [],
+      visibleColorPicker: undefined,
+      filterRange: undefined,
     };
   },
   methods: {
+    nodeToTableItem(node, index) {
+      const rgb = node.slice(1).map((value) => value * 255);
+      return {
+        id: index,
+        value: node[0],
+        rgbString: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
+        rgb,
+        index,
+      };
+    },
     scalarToPosition(scalar) {
       let calculatedPosition =
         this.gradientLength *
@@ -55,9 +70,9 @@ export default {
     },
     positionToScalar(position) {
       position -= 10; // -10 accounts for half the square width
-      return (
+      return Math.round(
         (position / this.gradientLength) * this.rangeDifference +
-        this.dataRange[0]
+          this.dataRange[0]
       );
     },
     getFullRange() {
@@ -81,6 +96,24 @@ export default {
         this.dataRange[0]
       );
     },
+    createNodeAtClick(event) {
+      const newNodeValue = Math.round(this.positionToScalar(event.layerX));
+      const newNode = [newNodeValue, 0, 0, 0];
+      this.colorNodes = [...this.colorNodes, newNode];
+      this.selectedNodes = [
+        this.nodeToTableItem(newNode, this.colorNodes.length - 1),
+      ];
+      this.render();
+    },
+    updateFilterRange(newRange) {
+      this.filterRange = newRange;
+    },
+    updateSelectedNodes(selected) {
+      this.selectedNodes = selected;
+    },
+    updateVisibleColorPicker(visibleColorPicker) {
+      this.visibleColorPicker = visibleColorPicker;
+    },
     updateSingleNode(nodeIndex, newValue) {
       this.colorNodes[nodeIndex] = newValue;
       this.colorNodes = [...this.colorNodes];
@@ -95,6 +128,14 @@ export default {
     },
   },
   mounted() {
+    listenDragSelection(
+      this.$refs.histogramLabels,
+      (startPos: number, endPos: number) => {
+        const startValue = this.positionToScalar(startPos);
+        const endValue = this.positionToScalar(endPos);
+        this.filterRange = [startValue, endValue];
+      }
+    );
     this.render();
   },
   updated() {
@@ -104,9 +145,24 @@ export default {
 </script>
 
 <template>
-  <div :class="!dark ? 'widget-container' : 'widget-container dark'">
+  <div
+    ref="container"
+    :class="!dark ? 'widget-container' : 'widget-container dark'"
+  >
+    <info-tooltip
+      v-if="colorLine"
+      :dark="dark"
+      :container="$refs.container"
+      :positionToScalar="positionToScalar"
+      :histogramData="histogramData"
+      :targets="[$refs.histogram, $refs.histogramLabels, $refs.colorLine]"
+    />
     <canvas ref="histogram" class="histogram-canvas indented" />
-    <div ref="histogramLabels" class="histogram-labels indented" />
+    <div
+      ref="histogramLabels"
+      class="histogram-labels indented"
+      @dblclick="createNodeAtClick"
+    />
     <div ref="colorLine" :class="!dark ? 'color-line' : 'color-line dark'">
       <canvas ref="gradientBox" class="gradient-box" />
       <color-node
@@ -119,15 +175,24 @@ export default {
         :colorLine="colorLine"
         :dataRange="dataRange"
         :dark="dark"
+        :visibleColorPicker="visibleColorPicker"
         :scalarToPosition="scalarToPosition"
         :positionToScalar="positionToScalar"
         @change="updateSingleNode"
+        @pick="updateVisibleColorPicker"
+        @updaterange="updateFilterRange"
       />
     </div>
     <color-node-list
       :nodes="colorNodes"
+      :selectedNodes="selectedNodes"
+      :visibleColorPicker="visibleColorPicker"
+      :nodeToTableItem="nodeToTableItem"
+      :filterRange="filterRange"
       :dark="dark"
       @change="updateNodeList"
+      @select="updateSelectedNodes"
+      @pick="updateVisibleColorPicker"
     />
     <br />
     <v-btn @click="update" class="update-btn">Update</v-btn>

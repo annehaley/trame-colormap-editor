@@ -7,6 +7,22 @@ export default {
       type: Array,
       required: true,
     },
+    selectedNodes: {
+      type: Array,
+      required: true,
+    },
+    visibleColorPicker: {
+      type: Number || undefined,
+      default: undefined,
+    },
+    filterRange: {
+      type: Array || undefined,
+      default: undefined,
+    },
+    nodeToTableItem: {
+      type: Function,
+      required: true,
+    },
     dark: {
       type: Boolean,
       default: false,
@@ -14,8 +30,6 @@ export default {
   },
   data() {
     return {
-      selectedNodes: [],
-      visibleColorPicker: undefined,
       colorPickerWidth: 300,
       colorPickerValue: {
         r: 255,
@@ -32,16 +46,6 @@ export default {
       const values = this.nodeList.map((node) => node.value);
       return [Math.min(...values), Math.max(...values)];
     },
-    nodeToTableItem(node, index) {
-      const rgb = node.slice(1).map((value) => value * 255);
-      return {
-        id: index,
-        value: node[0],
-        rgbString: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
-        rgb,
-        index,
-      };
-    },
     nodeIndexToColorPickerValue(node) {
       const rgb = node.slice(1).map((value) => value * 255);
       // TODO: change based on interpolation mode
@@ -52,37 +56,33 @@ export default {
       };
     },
     toggleSelectNode(item, single = false) {
-      this.visibleColorPicker = undefined;
+      this.$emit("pick", undefined);
       if (this.selectedNodes.map((node) => node.id).includes(item.id)) {
-        this.selectedNodes = this.selectedNodes.filter(
+        const newSelectedNodes = this.selectedNodes.filter(
           (node) => node.id != item.id
         );
+        this.$emit("select", newSelectedNodes);
       } else {
-        if (single) this.selectedNodes = [item];
-        else this.selectedNodes.push(item);
+        if (single) this.$emit("select", [item]);
+        else {
+          const newSelectedNodes = [...this.selectedNodes];
+          newSelectedNodes.push(item);
+          this.$emit("select", newSelectedNodes);
+        }
       }
     },
     toggleSelectAll() {
       if (this.selectedNodes.length == this.filteredNodeList.length) {
-        this.selectedNodes = [];
+        this.$emit("select", []);
       } else {
-        this.selectedNodes = this.filteredNodeList;
+        this.$emit("select", this.filteredNodeList);
       }
     },
     toggleColorPicker(item) {
       if (this.visibleColorPicker !== item.id) {
-        this.visibleColorPicker = item.id;
-        this.colorPickerValue = this.nodeIndexToColorPickerValue(
-          this.nodes[this.visibleColorPicker]
-        );
-        this.$nextTick(() => {
-          if (this.$refs.colorPicker) {
-            this.colorPickerWidth = this.$refs.colorPicker.$el.clientWidth;
-          }
-        });
+        this.$emit("pick", item.id);
       } else {
-        this.visibleColorPicker = undefined;
-        this.colorPickerValue = { r: 255, g: 0, b: 0 };
+        this.$emit("pick", undefined);
       }
     },
     changeNodeValue(index, newValue) {
@@ -96,13 +96,13 @@ export default {
         newList.splice(node.id, 1);
       });
       this.$emit("change", newList);
-      this.selectedNodes = [];
+      this.$emit("select", []);
     },
     addNode() {
       const newNode = [0, 0, 0, 0];
       const newList = [...this.nodes];
       newList.push(newNode);
-      this.selectedNodes = [this.nodeToTableItem(newNode, newList.length - 1)];
+      this.$emit("select", [this.nodeToTableItem(newNode, newList.length - 1)]);
       this.$emit("change", newList);
     },
     updateColorOfSelectedNode(newValue) {
@@ -156,6 +156,21 @@ export default {
       this.fullRange = this.getNodesRange();
       this.tableRange = this.fullRange;
     },
+    visibleColorPicker() {
+      if (this.visibleColorPicker !== undefined) {
+        this.colorPickerValue = this.nodeIndexToColorPickerValue(
+          this.nodes[this.visibleColorPicker]
+        );
+        this.$nextTick(() => {
+          if (this.$refs.colorPicker) {
+            this.colorPickerWidth = this.$refs.colorPicker.$el.clientWidth;
+          }
+        });
+      }
+    },
+    filterRange() {
+      this.tableRange = this.filterRange;
+    },
   },
   mounted() {
     this.fullRange = this.getNodesRange();
@@ -166,7 +181,7 @@ export default {
 
 <template>
   <v-data-table
-    v-model="selectedNodes"
+    :value="selectedNodes"
     ref="table"
     :items="filteredNodeList"
     :headers="headers"
@@ -177,6 +192,7 @@ export default {
     hide-default-footer
     height="200px"
     dense
+    @select="(newSelection) => this.$emit('select', newSelection)"
   >
     <template #top>
       <div
@@ -193,7 +209,7 @@ export default {
         </div>
         <div
           v-if="tableRange"
-          class="ml-3 d-flex"
+          class="ml-5 d-flex caption"
           style="column-gap: 5px; align-items: center"
         >
           Show
@@ -220,6 +236,9 @@ export default {
             :max="fullRange[1]"
             @input="$set(tableRange, 1, $event)"
           ></v-text-field>
+          <v-icon @click="tableRange = fullRange">
+            mdi-arrow-expand-vertical
+          </v-icon>
         </div>
       </div>
     </template>
@@ -249,6 +268,12 @@ export default {
             class="color-editor-pane"
             v-if="visibleColorPicker == item.id"
           >
+            <v-icon
+              style="float: right"
+              @click="() => $emit('pick', undefined)"
+            >
+              mdi-close
+            </v-icon>
             <v-lazy>
               <v-color-picker
                 :value="colorPickerValue"
@@ -288,7 +313,6 @@ export default {
         <v-btn small :disabled="selectedNodes.length > 0" @click="addNode">
           + New
         </v-btn>
-        <!-- <v-btn small :disabled="selectedNodes.length < 2"> Adjust range </v-btn> -->
         <v-btn
           small
           :disabled="selectedNodes.length == 0"
