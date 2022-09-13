@@ -209,7 +209,7 @@ export default {
         </div>
         <div
           v-if="tableRange"
-          class="ml-3 d-flex"
+          class="ml-5 d-flex caption"
           style="column-gap: 5px; align-items: center"
         >
           Show
