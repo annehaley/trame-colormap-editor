@@ -149,12 +149,29 @@ export default {
     ref="container"
     :class="!dark ? 'widget-container' : 'widget-container dark'"
   >
+    <v-tooltip right>
+      <template v-slot:activator="{ on, attrs }">
+        <v-icon class="help-circle" :dark="dark" v-bind="attrs" v-on="on">
+          mdi-help-circle
+        </v-icon>
+      </template>
+      <div class="caption">
+        Double click gradient bar to create new control point
+        <br />
+        Double click existing control point to edit color
+        <br />
+        Drag along section of gradient to select range and filter table
+        <br />
+        Drag existing control point to edit its value
+      </div>
+    </v-tooltip>
     <info-tooltip
       v-if="colorLine"
       :dark="dark"
       :container="$refs.container"
       :positionToScalar="positionToScalar"
       :histogramData="histogramData"
+      :nodes="colorNodes"
       :targets="[$refs.histogram, $refs.histogramLabels, $refs.colorLine]"
     />
     <canvas ref="histogram" class="histogram-canvas indented" />
@@ -203,6 +220,12 @@ export default {
 .dark {
   color: white !important;
 }
+.help-circle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 30px;
+}
 .widget-container {
   display: flex;
   flex-direction: column;
@@ -221,7 +244,7 @@ export default {
   display: flex;
   position: absolute;
   width: 100%;
-  top: 100px;
+  top: 140px;
   z-index: 3;
   justify-content: space-between;
   font-weight: 900;

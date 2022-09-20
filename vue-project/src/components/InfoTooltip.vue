@@ -14,6 +14,10 @@ export default {
       type: Object as () => HistogramData,
       required: true,
     },
+    nodes: {
+      type: Array,
+      required: true,
+    },
     positionToScalar: {
       type: Function,
       required: true,
@@ -60,8 +64,8 @@ export default {
         this.show = true;
         this.$nextTick(() => {
           if (this.$refs.tooltip) {
-            const left = e.pageX - this.container.offsetLeft;
-            const top = e.pageY - this.container.offsetTop;
+            const left = e.pageX - this.container.offsetLeft + 5;
+            const top = e.pageY - this.container.offsetTop + 5;
             this.$refs.tooltip.$el.style.left = left + "px";
             this.$refs.tooltip.$el.style.top = top + "px";
             this.targetValue = Math.round(this.positionToScalar(left - 20));
@@ -86,6 +90,30 @@ export default {
         this.binInfo = undefined;
       }
     },
+    getColorSquare(targetValue) {
+      let leftNode = undefined;
+      let rightNode = undefined;
+
+      this.nodes.forEach((node) => {
+        if (node[0] <= targetValue) {
+          if (!leftNode || node[0] > leftNode[0]) {
+            leftNode = node;
+          }
+        } else {
+          if (!rightNode || node[0] < rightNode[0]) {
+            rightNode = node;
+          }
+        }
+      });
+      const proportion =
+        (targetValue - leftNode[0]) / (rightNode[0] - leftNode[0]);
+      const newRGB = leftNode.slice(1).map((v, i) => {
+        return Math.round(((rightNode[i + 1] - v) * proportion + v) * 255);
+      });
+      const newRGBString = `rgb(${newRGB[0]}, ${newRGB[1]}, ${newRGB[2]})`;
+
+      return `margin-left: 5px; background-color: ${newRGBString}`;
+    },
   },
   mounted() {
     document.addEventListener("mousemove", this.moveTooltip, false);
@@ -95,18 +123,18 @@ export default {
 
 <template>
   <v-card v-show="show" ref="tooltip" :dark="dark" class="mouse-tooltip pa-2">
-    <div v-if="targetValue">Value = {{ targetValue }}</div>
+    <div v-if="targetValue">
+      Value = {{ targetValue }}
+      <div
+        v-if="!binInfo"
+        class="color-square"
+        :style="getColorSquare(targetValue)"
+      ></div>
+    </div>
     <div v-if="binInfo && binInfo.range" class="caption">
       Bin range: {{ binInfo.range[0] }}...{{ binInfo.range[1] }}
     </div>
     <div v-if="binInfo" class="caption">Bin count: {{ binInfo.count }}</div>
-    <div v-else class="caption">
-      Double click gradient bar to create new control point
-      <br />
-      Double click existing control point to edit color
-      <br />
-      Drag to select range and filter table
-    </div>
   </v-card>
 </template>
 
