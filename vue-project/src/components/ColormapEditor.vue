@@ -118,10 +118,12 @@ export default {
       this.colorNodes[nodeIndex] = newValue;
       this.colorNodes = [...this.colorNodes];
       this.render();
+      this.update();
     },
     updateNodeList(newList) {
       this.colorNodes = newList;
       this.render();
+      this.update();
     },
     update() {
       this.$emit("input", [...this.colorNodes]);
@@ -211,8 +213,6 @@ export default {
       @select="updateSelectedNodes"
       @pick="updateVisibleColorPicker"
     />
-    <br />
-    <v-btn @click="update" class="update-btn">Update</v-btn>
   </div>
 </template>
 
