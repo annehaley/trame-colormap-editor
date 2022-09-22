@@ -110,14 +110,14 @@ export default {
     },
     updateColorOfSelectedNode(newValue) {
       this.colorPickerValue = newValue;
+      const targetNode = this.nodeList.find(
+        (node) => node.id == this.visibleColorPicker
+      );
       const newList = [...this.nodes];
       const newRGB = Object.values(newValue).map(
         (ratio: number) => ratio / 255
       );
-      newList[this.selectedNodes[0].index] = [
-        this.selectedNodes[0].value,
-        ...newRGB,
-      ];
+      newList[this.visibleColorPicker] = [targetNode.value, ...newRGB];
       this.$emit("change", newList);
     },
     updateList(newItems) {
@@ -267,10 +267,17 @@ export default {
             ref="colorPicker"
             class="color-editor-pane"
             v-if="visibleColorPicker == item.id"
+            :ripple="false"
+            @click="(e) => e.stopPropagation()"
           >
             <v-icon
               style="float: right"
-              @click="() => $emit('pick', undefined)"
+              @click="
+                (e) => {
+                  e.stopPropagation();
+                  $emit('pick', undefined);
+                }
+              "
             >
               mdi-close
             </v-icon>
