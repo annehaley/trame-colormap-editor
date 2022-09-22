@@ -55,6 +55,9 @@ export default {
         b: rgb[2],
       };
     },
+    resetTableRange() {
+      this.tableRange = [...this.fullRange];
+    },
     toggleSelectNode(item, single = false) {
       this.$emit("pick", undefined);
       if (this.selectedNodes.map((node) => node.id).includes(item.id)) {
@@ -154,7 +157,7 @@ export default {
         (node) => node.value >= shownRange[0] && node.value <= shownRange[1]
       );
       this.fullRange = this.getNodesRange();
-      this.tableRange = this.fullRange;
+      this.tableRange = [...this.fullRange];
     },
     visibleColorPicker() {
       if (this.visibleColorPicker !== undefined) {
@@ -174,7 +177,7 @@ export default {
   },
   mounted() {
     this.fullRange = this.getNodesRange();
-    this.tableRange = this.fullRange;
+    this.tableRange = [...this.fullRange];
   },
 };
 </script>
@@ -191,54 +194,51 @@ export default {
     fixed-header
     hide-default-footer
     height="200px"
+    class="mt-3"
     dense
     @select="(newSelection) => this.$emit('select', newSelection)"
   >
     <template #top>
       <div
-        :dark="dark"
-        class="px-3 py-1 d-flex"
-        style="justify-content: space-between; align-items: center"
+        v-if="tableRange"
+        class="px-3 d-flex caption"
+        style="column-gap: 5px; align-items: center"
       >
+        Filter table by range
+        <v-text-field
+          :value="tableRange[0]"
+          class="mt-0 pt-0"
+          hide-details
+          single-line
+          type="number"
+          style="width: 60px"
+          :min="fullRange[0]"
+          :max="tableRange[1]"
+          @input="$set(tableRange, 0, $event)"
+        ></v-text-field>
+        ...
+        <v-text-field
+          :value="tableRange[1]"
+          class="mt-0 pt-0"
+          hide-details
+          single-line
+          type="number"
+          style="width: 60px"
+          :min="tableRange[0]"
+          :max="fullRange[1]"
+          @input="$set(tableRange, 1, $event)"
+        ></v-text-field>
+        <div style="flex-grow: 5">
+          <v-icon @click="resetTableRange"> mdi-arrow-expand-vertical </v-icon>
+        </div>
+      </div>
+      <div :dark="dark" class="px-3 d-flex" style="align-items: center">
         <div class="text-caption">
           {{ nodeList.length }} Control Points
           <i>
             ({{ filteredNodeList.length }} shown,
             {{ selectedNodes.length }} selected)
           </i>
-        </div>
-        <div
-          v-if="tableRange"
-          class="ml-5 d-flex caption"
-          style="column-gap: 5px; align-items: center"
-        >
-          Show
-          <v-text-field
-            :value="tableRange[0]"
-            class="mt-0 pt-0"
-            hide-details
-            single-line
-            type="number"
-            style="width: 60px"
-            :min="fullRange[0]"
-            :max="tableRange[1]"
-            @input="$set(tableRange, 0, $event)"
-          ></v-text-field>
-          ...
-          <v-text-field
-            :value="tableRange[1]"
-            class="mt-0 pt-0"
-            hide-details
-            single-line
-            type="number"
-            style="width: 60px"
-            :min="tableRange[0]"
-            :max="fullRange[1]"
-            @input="$set(tableRange, 1, $event)"
-          ></v-text-field>
-          <v-icon @click="tableRange = fullRange">
-            mdi-arrow-expand-vertical
-          </v-icon>
         </div>
       </div>
     </template>
