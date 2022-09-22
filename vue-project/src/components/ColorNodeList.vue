@@ -202,16 +202,15 @@ export default {
       <div
         v-if="tableRange"
         class="px-3 d-flex caption"
-        style="column-gap: 5px; align-items: center"
+        style="column-gap: 5px; align-items: center; flex-wrap: wrap"
       >
         Filter table by range
         <v-text-field
           :value="tableRange[0]"
-          class="mt-0 pt-0"
+          class="mt-0 pt-0 value-input"
           hide-details
           single-line
           type="number"
-          style="width: 60px"
           :min="fullRange[0]"
           :max="tableRange[1]"
           @input="$set(tableRange, 0, $event)"
@@ -219,7 +218,7 @@ export default {
         ...
         <v-text-field
           :value="tableRange[1]"
-          class="mt-0 pt-0"
+          class="mt-0 pt-0 value-input"
           hide-details
           single-line
           type="number"
@@ -307,7 +306,7 @@ export default {
     <template #footer>
       <div
         class="d-flex mt-2"
-        style="justify-content: space-between; flex-wrap: wrap"
+        style="justify-content: space-between; flex-wrap: wrap; row-gap: 5px"
       >
         <v-btn small @click="toggleSelectAll">
           {{
@@ -349,6 +348,8 @@ tr.selected.dark {
 }
 .value-input {
   width: 70px;
+  min-width: 60px;
+  max-width: 70px;
   padding: 0;
   margin: 0;
 }
