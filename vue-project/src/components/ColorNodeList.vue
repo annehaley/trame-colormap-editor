@@ -55,6 +55,9 @@ export default {
         b: rgb[2],
       };
     },
+    resetTableRange() {
+      this.tableRange = [...this.fullRange];
+    },
     toggleSelectNode(item, single = false) {
       this.$emit("pick", undefined);
       if (this.selectedNodes.map((node) => node.id).includes(item.id)) {
@@ -107,14 +110,14 @@ export default {
     },
     updateColorOfSelectedNode(newValue) {
       this.colorPickerValue = newValue;
+      const targetNode = this.nodeList.find(
+        (node) => node.id == this.visibleColorPicker
+      );
       const newList = [...this.nodes];
       const newRGB = Object.values(newValue).map(
         (ratio: number) => ratio / 255
       );
-      newList[this.selectedNodes[0].index] = [
-        this.selectedNodes[0].value,
-        ...newRGB,
-      ];
+      newList[this.visibleColorPicker] = [targetNode.value, ...newRGB];
       this.$emit("change", newList);
     },
     updateList(newItems) {
@@ -154,7 +157,7 @@ export default {
         (node) => node.value >= shownRange[0] && node.value <= shownRange[1]
       );
       this.fullRange = this.getNodesRange();
-      this.tableRange = this.fullRange;
+      this.tableRange = [...this.fullRange];
     },
     visibleColorPicker() {
       if (this.visibleColorPicker !== undefined) {
@@ -174,7 +177,7 @@ export default {
   },
   mounted() {
     this.fullRange = this.getNodesRange();
-    this.tableRange = this.fullRange;
+    this.tableRange = [...this.fullRange];
   },
 };
 </script>
@@ -191,54 +194,50 @@ export default {
     fixed-header
     hide-default-footer
     height="200px"
+    class="mt-3"
     dense
     @select="(newSelection) => this.$emit('select', newSelection)"
   >
     <template #top>
       <div
-        :dark="dark"
-        class="px-3 py-1 d-flex"
-        style="justify-content: space-between; align-items: center"
+        v-if="tableRange"
+        class="px-3 d-flex caption"
+        style="column-gap: 5px; align-items: center; flex-wrap: wrap"
       >
+        Filter table by range
+        <v-text-field
+          :value="tableRange[0]"
+          class="mt-0 pt-0 value-input"
+          hide-details
+          single-line
+          type="number"
+          :min="fullRange[0]"
+          :max="tableRange[1]"
+          @input="$set(tableRange, 0, $event)"
+        ></v-text-field>
+        ...
+        <v-text-field
+          :value="tableRange[1]"
+          class="mt-0 pt-0 value-input"
+          hide-details
+          single-line
+          type="number"
+          style="width: 60px"
+          :min="tableRange[0]"
+          :max="fullRange[1]"
+          @input="$set(tableRange, 1, $event)"
+        ></v-text-field>
+        <div style="flex-grow: 5">
+          <v-icon @click="resetTableRange"> mdi-arrow-expand-vertical </v-icon>
+        </div>
+      </div>
+      <div :dark="dark" class="px-3 d-flex" style="align-items: center">
         <div class="text-caption">
           {{ nodeList.length }} Control Points
           <i>
             ({{ filteredNodeList.length }} shown,
             {{ selectedNodes.length }} selected)
           </i>
-        </div>
-        <div
-          v-if="tableRange"
-          class="ml-5 d-flex caption"
-          style="column-gap: 5px; align-items: center"
-        >
-          Show
-          <v-text-field
-            :value="tableRange[0]"
-            class="mt-0 pt-0"
-            hide-details
-            single-line
-            type="number"
-            style="width: 60px"
-            :min="fullRange[0]"
-            :max="tableRange[1]"
-            @input="$set(tableRange, 0, $event)"
-          ></v-text-field>
-          ...
-          <v-text-field
-            :value="tableRange[1]"
-            class="mt-0 pt-0"
-            hide-details
-            single-line
-            type="number"
-            style="width: 60px"
-            :min="tableRange[0]"
-            :max="fullRange[1]"
-            @input="$set(tableRange, 1, $event)"
-          ></v-text-field>
-          <v-icon @click="tableRange = fullRange">
-            mdi-arrow-expand-vertical
-          </v-icon>
         </div>
       </div>
     </template>
@@ -267,10 +266,17 @@ export default {
             ref="colorPicker"
             class="color-editor-pane"
             v-if="visibleColorPicker == item.id"
+            :ripple="false"
+            @click="(e) => e.stopPropagation()"
           >
             <v-icon
               style="float: right"
-              @click="() => $emit('pick', undefined)"
+              @click="
+                (e) => {
+                  e.stopPropagation();
+                  $emit('pick', undefined);
+                }
+              "
             >
               mdi-close
             </v-icon>
@@ -300,7 +306,7 @@ export default {
     <template #footer>
       <div
         class="d-flex mt-2"
-        style="justify-content: space-between; flex-wrap: wrap"
+        style="justify-content: space-between; flex-wrap: wrap; row-gap: 5px"
       >
         <v-btn small @click="toggleSelectAll">
           {{
@@ -342,6 +348,8 @@ tr.selected.dark {
 }
 .value-input {
   width: 70px;
+  min-width: 60px;
+  max-width: 70px;
   padding: 0;
   margin: 0;
 }
