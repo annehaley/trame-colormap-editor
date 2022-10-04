@@ -1,14 +1,19 @@
 <script lang="ts">
 import ColorNode from "./ColorNode.vue";
-import { drawHistogram, drawGradient } from "../utils/canvasDrawing";
+import {
+  drawHistogram,
+  drawLabels,
+  drawGradient,
+} from "../utils/canvasDrawing";
 import { HistogramData } from "../utils/types";
 import ColorNodeList from "./ColorNodeList.vue";
 import clamp from "../utils/clamp";
 import InfoTooltip from "./InfoTooltip.vue";
 import { listenDragSelection } from "../utils/drag";
+import OptionIcons from "./OptionIcons.vue";
 
 export default {
-  components: { ColorNode, ColorNodeList, InfoTooltip },
+  components: { ColorNode, ColorNodeList, InfoTooltip, OptionIcons },
   props: {
     value: {
       type: Array,
@@ -43,6 +48,10 @@ export default {
       selectedNodes: [],
       visibleColorPicker: undefined,
       filterRange: undefined,
+      options: {
+        opacityMode: false,
+        showHistogram: false,
+      },
     };
   },
   methods: {
@@ -83,12 +92,10 @@ export default {
     },
     render() {
       this.colorLine = this.$refs.colorLine;
-      drawHistogram(
-        this.histogramData,
-        this.$refs.histogram,
-        this.$refs.histogramLabels,
-        this.dark
-      );
+      if (this.options.showHistogram) {
+        drawHistogram(this.histogramData, this.$refs.histogram, this.dark);
+      }
+      drawLabels(this.histogramData, this.$refs.histogramLabels);
       drawGradient(
         this.colorNodes,
         this.$refs.gradientBox,
@@ -104,6 +111,9 @@ export default {
         this.nodeToTableItem(newNode, this.colorNodes.length - 1),
       ];
       this.render();
+    },
+    updateOption(optionName, newValue) {
+      this.options[optionName] = newValue;
     },
     updateFilterRange(newRange) {
       this.filterRange = newRange;
@@ -167,6 +177,7 @@ export default {
         Drag existing control point to edit its value
       </div>
     </v-tooltip>
+    <option-icons :options="options" :dark="dark" @update="updateOption" />
     <info-tooltip
       v-if="colorLine"
       :dark="dark"
@@ -176,10 +187,19 @@ export default {
       :nodes="colorNodes"
       :targets="[$refs.histogram, $refs.histogramLabels, $refs.colorLine]"
     />
-    <canvas ref="histogram" class="histogram-canvas indented" />
+    <canvas
+      v-if="options.showHistogram"
+      ref="histogram"
+      class="histogram-canvas indented"
+    />
+    <br v-else />
     <div
       ref="histogramLabels"
-      class="histogram-labels indented"
+      :class="
+        options.showHistogram || options.opacityMode
+          ? 'histogram-labels shifted indented'
+          : 'histogram-labels indented'
+      "
       @dblclick="createNodeAtClick"
     />
     <div ref="colorLine" :class="!dark ? 'color-line' : 'color-line dark'">
@@ -244,13 +264,16 @@ export default {
   display: flex;
   position: absolute;
   width: 100%;
-  top: 140px;
+  top: 35px;
   z-index: 3;
   justify-content: space-between;
   font-weight: 900;
   -webkit-text-fill-color: white;
   -webkit-text-stroke-width: 1px;
   -webkit-text-stroke-color: black;
+}
+.histogram-labels.shifted {
+  top: 140px;
 }
 .gradient-box {
   height: 45px;
