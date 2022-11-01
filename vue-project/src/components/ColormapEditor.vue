@@ -11,9 +11,16 @@ import clamp from "../utils/clamp";
 import InfoTooltip from "./InfoTooltip.vue";
 import { listenDragSelection } from "../utils/drag";
 import OptionIcons from "./OptionIcons.vue";
+import OpacityEditor from "./OpacityEditor.vue";
 
 export default {
-  components: { ColorNode, ColorNodeList, InfoTooltip, OptionIcons },
+  components: {
+    ColorNode,
+    ColorNodeList,
+    InfoTooltip,
+    OptionIcons,
+    OpacityEditor,
+  },
   props: {
     value: {
       type: Array,
@@ -192,7 +199,12 @@ export default {
       ref="histogram"
       class="histogram-canvas indented"
     />
-    <br v-else />
+    <div v-else :class="options.opacityMode ? 'tall-gap' : ''" />
+    <opacity-editor
+      v-if="options.opacityMode"
+      :dark="dark"
+      :dataRange="dataRange"
+    />
     <div
       ref="histogramLabels"
       :class="
@@ -293,5 +305,8 @@ export default {
 }
 .update-btn {
   justify-self: flex-end;
+}
+.tall-gap {
+  height: 100px;
 }
 </style>

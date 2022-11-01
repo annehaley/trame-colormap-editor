@@ -29,13 +29,18 @@ export default {
               label: "Opacity",
               data: [1, 1],
               fill: true,
-              tension: 0.4,
+              tension: 0.5,
               borderWidth: 1,
               pointHitRadius: 25,
+              backgroundColor: this.dark ? "#fff" : "#000",
+              pointBackgroundColor: this.dark ? "#fff" : "#000",
+              borderColor: this.dark ? "#fff" : "#000",
             },
           ],
         },
         options: {
+          responsive: true,
+          maintainAspectRatio: false,
           scales: {
             y: {
               min: 0,
@@ -44,6 +49,12 @@ export default {
             x: {
               min: 0,
               max: 100,
+              display: false,
+            },
+          },
+          layout: {
+            padding: {
+              right: 30,
             },
           },
           onHover: function (e) {
@@ -57,6 +68,9 @@ export default {
             else e.native.target.style.cursor = "default";
           },
           plugins: {
+            legend: {
+              display: false,
+            },
             dragData: {
               round: 1,
               dragX: true,
@@ -66,7 +80,7 @@ export default {
               },
               onDragEnd: function (e, datasetIndex, index, value) {
                 e.target.style.cursor = "default";
-                console.log(datasetIndex, index, value);
+                console.log(index, value);
               },
             },
           },
@@ -75,9 +89,14 @@ export default {
     };
   },
   mounted() {
-    this.ctx = (
-      document.getElementById("chartJSContainer") as HTMLCanvasElement
-    ).getContext("2d");
+    this.canvas = document.getElementById(
+      "chartJSContainer"
+    ) as HTMLCanvasElement;
+    this.ctx = this.canvas.getContext("2d");
+    this.gradient = this.ctx.createLinearGradient(0, 0, 0, 100);
+    this.gradient.addColorStop(1, "transparent");
+    this.gradient.addColorStop(0, this.dark ? "white" : "black");
+    this.options.data.datasets[0].backgroundColor = this.gradient;
     this.chartInstance = new Chart(this.ctx, this.options);
   },
 };
@@ -85,16 +104,24 @@ export default {
 
 <template>
   <div class="curve-editor">
-    <canvas id="chartJSContainer" height="50"></canvas>
+    <div class="responsive-size">
+      <canvas id="chartJSContainer" height="50"></canvas>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .curve-editor {
-  height: 150px;
-  width: 100%;
+  height: 110px;
+  width: calc(100% + 20px);
   position: absolute;
-  top: 30px;
+  top: 23px;
+  left: -10px;
   z-index: 5;
+}
+.responsive-size {
+  position: relative;
+  height: 100%;
+  width: 100%;
 }
 </style>
