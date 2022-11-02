@@ -22,11 +22,11 @@ export default {
     OpacityEditor,
   },
   props: {
-    value: {
+    colors: {
       type: Array,
       required: true,
     },
-    opacityValue: {
+    opacities: {
       type: Array,
       required: true,
     },
@@ -37,10 +37,12 @@ export default {
     dark: {
       type: Boolean,
       required: false,
-      default: false,
     },
   },
   computed: {
+    computedDark() {
+      return this.dark === undefined ? this.$vuetify.theme.dark : this.dark;
+    },
     dataRange() {
       return this.histogramData.range;
     },
@@ -55,8 +57,8 @@ export default {
   data() {
     return {
       colorLine: undefined,
-      colorNodes: this.value,
-      opacityNodes: this.opacityValue,
+      colorNodes: this.colors,
+      opacityNodes: this.opacities,
       selectedNodes: [],
       visibleColorPicker: undefined,
       filterRange: undefined,
@@ -105,7 +107,11 @@ export default {
     render() {
       this.colorLine = this.$refs.colorLine;
       if (this.options.showHistogram) {
-        drawHistogram(this.histogramData, this.$refs.histogram, this.dark);
+        drawHistogram(
+          this.histogramData,
+          this.$refs.histogram,
+          this.computedDark
+        );
       }
       drawLabels(this.histogramData, this.$refs.histogramLabels);
       drawGradient(
@@ -145,17 +151,11 @@ export default {
     updateNodeList(newList) {
       this.colorNodes = newList;
       this.render();
-      this.update();
+      this.$emit("updateColors", [...this.colorNodes]);
     },
     updateOpacityNodes(newList) {
       this.opacityNodes = newList;
-      this.update();
-    },
-    update() {
-      this.$emit("input", {
-        colorMap: [...this.colorNodes],
-        opacityMap: [...this.opacityNodes],
-      });
+      this.$emit("updateOpacities", [...this.opacityNodes]);
     },
   },
   mounted() {
@@ -178,11 +178,16 @@ export default {
 <template>
   <div
     ref="container"
-    :class="!dark ? 'widget-container' : 'widget-container dark'"
+    :class="!computedDark ? 'widget-container' : 'widget-container dark'"
   >
     <v-tooltip right>
       <template v-slot:activator="{ on, attrs }">
-        <v-icon class="help-circle" :dark="dark" v-bind="attrs" v-on="on">
+        <v-icon
+          class="help-circle"
+          :dark="computedDark"
+          v-bind="attrs"
+          v-on="on"
+        >
           mdi-help-circle
         </v-icon>
       </template>
@@ -196,10 +201,14 @@ export default {
         Drag existing control point to edit its value
       </div>
     </v-tooltip>
-    <option-icons :options="options" :dark="dark" @update="updateOption" />
+    <option-icons
+      :options="options"
+      :dark="computedDark"
+      @update="updateOption"
+    />
     <info-tooltip
       v-if="colorLine"
-      :dark="dark"
+      :dark="computedDark"
       :container="$refs.container"
       :positionToScalar="positionToScalar"
       :histogramData="histogramData"
@@ -215,7 +224,7 @@ export default {
     <opacity-editor
       v-if="options.opacityMode"
       :opacityNodes="opacityNodes"
-      :dark="dark"
+      :dark="computedDark"
       :dataRange="dataRange"
       @update="updateOpacityNodes"
     />
@@ -228,7 +237,10 @@ export default {
       "
       @dblclick="createNodeAtClick"
     />
-    <div ref="colorLine" :class="!dark ? 'color-line' : 'color-line dark'">
+    <div
+      ref="colorLine"
+      :class="!computedDark ? 'color-line' : 'color-line dark'"
+    >
       <canvas ref="gradientBox" class="gradient-box" />
       <color-node
         v-for="(node, index) in colorNodes"
@@ -239,7 +251,7 @@ export default {
         :histogramData="histogramData"
         :colorLine="colorLine"
         :dataRange="dataRange"
-        :dark="dark"
+        :dark="computedDark"
         :visibleColorPicker="visibleColorPicker"
         :scalarToPosition="scalarToPosition"
         :positionToScalar="positionToScalar"
@@ -254,7 +266,7 @@ export default {
       :visibleColorPicker="visibleColorPicker"
       :nodeToTableItem="nodeToTableItem"
       :filterRange="filterRange"
-      :dark="dark"
+      :dark="computedDark"
       @change="updateNodeList"
       @select="updateSelectedNodes"
       @pick="updateVisibleColorPicker"

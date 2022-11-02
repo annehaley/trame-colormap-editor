@@ -14,7 +14,7 @@ export default defineComponent({
       ],
       range: [-2048.0, 3071.0],
     };
-    const value = [
+    const colors = [
       [-2200, 1, 0, 0],
       [-2048, 0, 1, 0],
       [511.5, 0, 0, 1],
@@ -22,7 +22,7 @@ export default defineComponent({
       [3300, 1, 1, 1],
     ];
 
-    const opacityValue = [
+    const opacities = [
       [-2048, 1],
       [511.5, 0.5],
       [3071, 1],
@@ -30,8 +30,8 @@ export default defineComponent({
 
     return {
       histogramData,
-      value,
-      opacityValue,
+      colors,
+      opacities,
     };
   },
 });
@@ -44,16 +44,16 @@ export default defineComponent({
         <div class="container-1">
           <colormap-editor
             :histogram-data="histogramData"
-            :value="value"
-            :opacityValue="opacityValue"
+            :colors="colors"
+            :opacities="opacities"
             dark
           />
         </div>
         <div class="container-2">
           <colormap-editor
             :histogram-data="histogramData"
-            :value="value"
-            :opacityValue="opacityValue"
+            :colors="colors"
+            :opacities="opacities"
           />
         </div>
       </div>

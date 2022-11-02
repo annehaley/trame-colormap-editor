@@ -16,11 +16,22 @@ def initialize(server):
     with SinglePageWithDrawerLayout(server) as layout:
         layout.title.set_text("Colormap Editor WIP")
 
-        with layout.drawer:
+        with layout.toolbar:
+            vuetify.VSwitch(
+                v_model="$vuetify.theme.dark",
+                hide_details=True,
+                dense=True,
+            )
+
+        with layout.drawer as drawer:
+            drawer.width = 400
             with vuetify.VContainer(classes="pa-5"):
                 ColormapEditor(
                     histogram_data=("histogram_data",),
-                    v_model="colormap_points",
+                    colors=("colormap_points",),
+                    opacities=("opacity_points",),
+                    update_colors="colormap_points = $event",
+                    update_opacities="opacity_points = $event",
                 )
 
         # Main content
