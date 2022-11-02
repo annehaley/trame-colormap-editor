@@ -17,6 +17,10 @@ export default {
       type: Array,
       required: true,
     },
+    opacityNodes: {
+      type: Array,
+      required: true,
+    },
   },
   components: {},
   data() {
@@ -80,7 +84,11 @@ export default {
   methods: {
     completeDrag(e, dIndex, index, value) {
       e.target.style.cursor = "default";
-      console.log(index, value);
+      this.currentData[index] = value;
+      this.$emit(
+        "update",
+        this.currentData.map(({ x, y }) => [x, y])
+      );
     },
     insertSortedByFunction(array, value, func) {
       // from https://stackoverflow.com/a/21822316
@@ -101,9 +109,6 @@ export default {
         x,
         (a, b) => a < b
       );
-      // this.chartInstance.data.labels.push(x);
-      console.log(this.chartInstance.data.labels);
-      // this.currentData.push({ x, y });
       this.currentData = this.insertSortedByFunction(
         this.currentData,
         { x, y },
@@ -135,10 +140,13 @@ export default {
 
     this.chartInstance = new Chart(this.ctx, this.chartOptions);
 
-    // populate with two endpoints
-    this.addDatum(0, 1);
-    this.addDatum(100, 1);
-    this.addDatum(49, 0.5);
+    // populate with input data
+    this.opacityNodes.forEach(([x, y]) => {
+      const proportionalX =
+        ((x - this.dataRange[0]) / (this.dataRange[1] - this.dataRange[0])) *
+        100;
+      this.addDatum(proportionalX, y);
+    });
   },
 };
 </script>

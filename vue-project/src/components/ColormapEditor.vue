@@ -26,6 +26,10 @@ export default {
       type: Array,
       required: true,
     },
+    opacityValue: {
+      type: Array,
+      required: true,
+    },
     histogramData: {
       type: Object as () => HistogramData,
       required: true,
@@ -52,6 +56,7 @@ export default {
     return {
       colorLine: undefined,
       colorNodes: this.value,
+      opacityNodes: this.opacityValue,
       selectedNodes: [],
       visibleColorPicker: undefined,
       filterRange: undefined,
@@ -142,8 +147,15 @@ export default {
       this.render();
       this.update();
     },
+    updateOpacityNodes(newList) {
+      this.opacityNodes = newList;
+      this.update();
+    },
     update() {
-      this.$emit("input", [...this.colorNodes]);
+      this.$emit("input", {
+        colorMap: [...this.colorNodes],
+        opacityMap: [...this.opacityNodes],
+      });
     },
   },
   mounted() {
@@ -202,8 +214,10 @@ export default {
     <div v-else :class="options.opacityMode ? 'tall-gap' : ''" />
     <opacity-editor
       v-if="options.opacityMode"
+      :opacityNodes="opacityNodes"
       :dark="dark"
       :dataRange="dataRange"
+      @update="updateOpacityNodes"
     />
     <div
       ref="histogramLabels"

@@ -22,9 +22,16 @@ export default defineComponent({
       [3300, 1, 1, 1],
     ];
 
+    const opacityValue = [
+      [-2048, 1],
+      [511.5, 0.5],
+      [3071, 1],
+    ];
+
     return {
       histogramData,
       value,
+      opacityValue,
     };
   },
 });
@@ -38,11 +45,16 @@ export default defineComponent({
           <colormap-editor
             :histogram-data="histogramData"
             :value="value"
+            :opacityValue="opacityValue"
             dark
           />
         </div>
         <div class="container-2">
-          <colormap-editor :histogram-data="histogramData" :value="value" />
+          <colormap-editor
+            :histogram-data="histogramData"
+            :value="value"
+            :opacityValue="opacityValue"
+          />
         </div>
       </div>
     </v-app>
