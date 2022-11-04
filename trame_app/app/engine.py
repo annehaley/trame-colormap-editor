@@ -22,6 +22,8 @@ DEFAULT_OPACITY_MAP = [
     [255, 1],
 ]
 
+DATA_PATH = Path(__file__).parent.parent.with_name("data")
+DATASET_PATH = (DATA_PATH / "skull.vti").absolute()
 
 # ---------------------------------------------------------
 # Server binding
@@ -32,9 +34,7 @@ def initialize(server):
     state.colormap_points = DEFAULT_COLOR_MAP
     state.opacity_points = DEFAULT_OPACITY_MAP
 
-    skull_vti = Path("trame_app/data/skull.vti")
-    print(skull_vti.absolute())
-    vtk_pipeline = VtkPipeline(skull_vti.absolute())
+    vtk_pipeline = VtkPipeline(DATASET_PATH)
     state.histogram_data = vtk_pipeline.get_histogram_data(buckets=10)
 
     @state.change("colormap_points")
