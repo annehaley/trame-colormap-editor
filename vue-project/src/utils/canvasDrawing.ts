@@ -6,14 +6,12 @@ const BAR_GAP = 2;
 export function drawHistogram(
   histogramData: HistogramData,
   canvas: HTMLCanvasElement,
-  labelsDiv: Element,
   dark = false
 ) {
   const context = canvas.getContext("2d");
   if (!context) return;
   if (dark) context.fillStyle = "white";
   const { width, height } = canvas;
-  labelsDiv.innerHTML = "";
 
   const numBuckets = histogramData.counts.length;
   const barWidth = width / numBuckets;
@@ -28,6 +26,10 @@ export function drawHistogram(
     context.rect(startX + BAR_GAP, startY, barWidth - BAR_GAP, barHeight);
     context.fill();
   });
+}
+
+export function drawLabels(histogramData: HistogramData, labelsDiv: Element) {
+  labelsDiv.innerHTML = "";
 
   const labels = histogramData.range;
   labels.forEach((barLabel) => {

@@ -93,6 +93,7 @@ export default {
     getColorSquare(targetValue) {
       let leftNode = undefined;
       let rightNode = undefined;
+      let newRGBString = "rgb(0, 0, 0)";
 
       this.nodes.forEach((node) => {
         if (node[0] <= targetValue) {
@@ -105,13 +106,22 @@ export default {
           }
         }
       });
-      const proportion =
-        (targetValue - leftNode[0]) / (rightNode[0] - leftNode[0]);
-      const newRGB = leftNode.slice(1).map((v, i) => {
-        return Math.round(((rightNode[i + 1] - v) * proportion + v) * 255);
-      });
-      const newRGBString = `rgb(${newRGB[0]}, ${newRGB[1]}, ${newRGB[2]})`;
-
+      if (!leftNode) {
+        newRGBString = `rgb(${rightNode[1] * 255}, ${rightNode[2] * 255}, ${
+          rightNode[3] * 255
+        })`;
+      } else if (!rightNode) {
+        newRGBString = `rgb(${leftNode[1] * 255}, ${leftNode[2] * 255}, ${
+          leftNode[3] * 255
+        })`;
+      } else {
+        const proportion =
+          (targetValue - leftNode[0]) / (rightNode[0] - leftNode[0]);
+        const newRGB = leftNode.slice(1).map((v, i) => {
+          return Math.round(((rightNode[i + 1] - v) * proportion + v) * 255);
+        });
+        newRGBString = `rgb(${newRGB[0]}, ${newRGB[1]}, ${newRGB[2]})`;
+      }
       return `margin-left: 5px; background-color: ${newRGBString}`;
     },
   },

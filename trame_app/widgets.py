@@ -18,7 +18,11 @@ class ColormapEditor(HtmlElement):
         )
         self._attr_names += [
             ("histogram_data", "histogramData"),
+            "colors",
+            "opacities",
+            "dark"
         ]
         self._event_names += [
-            "change",
+            ("update_colors", "updateColors"),
+            ("update_opacities", "updateOpacities"),
         ]
