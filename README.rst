@@ -12,6 +12,7 @@ Getting data
 ----------
 
 .. code-block:: console
+
     wget -O trame_app/data/skull.vti https://github.com/Kitware/vtk-js-datasets/blob/master/data/vti/skull.vti?raw=true
 
 
