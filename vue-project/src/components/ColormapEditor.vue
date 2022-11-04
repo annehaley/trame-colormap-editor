@@ -146,7 +146,7 @@ export default {
       this.colorNodes[nodeIndex] = newValue;
       this.colorNodes = [...this.colorNodes];
       this.render();
-      this.update();
+      this.$emit("updateColors", [...this.colorNodes]);
     },
     updateNodeList(newList) {
       this.colorNodes = newList;
