@@ -49,6 +49,7 @@ export default {
         },
         options: {
           responsive: true,
+          animation: false,
           maintainAspectRatio: false,
           scales: {
             y: { min: 0, max: 1 },
@@ -85,10 +86,7 @@ export default {
     completeDrag(e, dIndex, index, value) {
       e.target.style.cursor = "default";
       this.currentData[index] = value;
-      this.$emit(
-        "update",
-        this.currentData.map(({ x, y }) => [x, y])
-      );
+      this.update();
     },
     insertSortedByFunction(array, value, func) {
       // from https://stackoverflow.com/a/21822316
@@ -114,6 +112,7 @@ export default {
         { x, y },
         (a, b) => a.x < b.x
       );
+      this.chartInstance.data.datasets[0].data = this.currentData;
       this.chartInstance.update();
     },
     clickChart(e) {
@@ -125,6 +124,29 @@ export default {
         1
       );
       this.addDatum(x, y);
+      this.update();
+    },
+    render() {
+      // populate with input data
+      this.currentData = [];
+      this.opacityNodes.forEach(([x, y]) => {
+        const proportionalX =
+          ((x - this.dataRange[0]) / (this.dataRange[1] - this.dataRange[0])) *
+          100;
+        this.addDatum(proportionalX, y);
+      });
+    },
+    update() {
+      this.$emit(
+        "update",
+        this.currentData.map(({ x, y }) => [
+          Math.round(
+            (x / 100) * (this.dataRange[1] - this.dataRange[0]) +
+              this.dataRange[0]
+          ),
+          y,
+        ])
+      );
     },
   },
   mounted() {
@@ -139,14 +161,12 @@ export default {
     this.gradient.addColorStop(0, this.dark ? "white" : "black");
 
     this.chartInstance = new Chart(this.ctx, this.chartOptions);
-
-    // populate with input data
-    this.opacityNodes.forEach(([x, y]) => {
-      const proportionalX =
-        ((x - this.dataRange[0]) / (this.dataRange[1] - this.dataRange[0])) *
-        100;
-      this.addDatum(proportionalX, y);
-    });
+    this.render();
+  },
+  watch: {
+    opacityNodes() {
+      this.render();
+    },
   },
 };
 </script>

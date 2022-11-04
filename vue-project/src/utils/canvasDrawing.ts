@@ -46,6 +46,7 @@ export function drawGradient(
   fullRange: Array<number>,
   crop: number
 ) {
+  if (!canvas) return;
   const context = canvas.getContext("2d");
   if (!context) return;
   const { width, height } = canvas;

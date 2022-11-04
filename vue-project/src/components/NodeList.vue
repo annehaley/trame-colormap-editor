@@ -23,6 +23,10 @@ export default {
       type: Function,
       required: true,
     },
+    opacityMode: {
+      type: Boolean,
+      default: false,
+    },
     dark: {
       type: Boolean,
       default: false,
@@ -89,6 +93,7 @@ export default {
       }
     },
     changeNodeValue(index, newValue) {
+      if (!newValue) return;
       const newList = [...this.nodes];
       newList[index][0] = parseInt(newValue);
       this.$emit("change", newList);
@@ -102,10 +107,12 @@ export default {
       this.$emit("select", []);
     },
     addNode() {
-      const newNode = [0, 0, 0, 0];
+      const newNode = this.opacityMode ? [0, 0] : [0, 0, 0, 0];
       const newList = [...this.nodes];
       newList.push(newNode);
-      this.$emit("select", [this.nodeToTableItem(newNode, newList.length - 1)]);
+      this.$emit("select", [
+        this.nodeToTableItem(newNode, newList.length - 1, this.opacityMode),
+      ]);
       this.$emit("change", newList);
     },
     updateColorOfSelectedNode(newValue) {
@@ -130,7 +137,9 @@ export default {
   },
   computed: {
     nodeList() {
-      return this.nodes.map(this.nodeToTableItem);
+      return this.nodes.map((node, index) =>
+        this.nodeToTableItem(node, index, this.opacityMode)
+      );
     },
     headers() {
       return [
@@ -298,7 +307,8 @@ export default {
             hide-details
             single-line
             type="number"
-            @change="(newValue) => changeNodeValue(item.id, newValue)"
+            @click.stop
+            @input="(newValue) => changeNodeValue(item.id, newValue)"
           />
         </td>
       </tr>
@@ -329,7 +339,7 @@ export default {
         </v-btn>
       </div>
       <range-editor
-        v-if="fullRange"
+        v-if="fullRange && !opacityMode"
         :selectedNodes="selectedNodes"
         :dark="dark"
         :fullRange="fullRange"

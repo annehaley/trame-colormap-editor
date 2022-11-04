@@ -6,7 +6,7 @@ import {
   drawGradient,
 } from "../utils/canvasDrawing";
 import { HistogramData } from "../utils/types";
-import ColorNodeList from "./ColorNodeList.vue";
+import ColorNodeList from "./NodeList.vue";
 import clamp from "../utils/clamp";
 import InfoTooltip from "./InfoTooltip.vue";
 import { listenDragSelection } from "../utils/drag";
@@ -69,12 +69,18 @@ export default {
     };
   },
   methods: {
-    nodeToTableItem(node, index) {
-      const rgb = node.slice(1).map((value) => value * 255);
+    nodeToTableItem(node, index, opacity) {
+      let rgb;
+      if (!opacity) {
+        rgb = node.slice(1).map((value) => value * 255);
+        rgb = [...rgb, 1];
+      } else {
+        rgb = this.computedDark ? [255, 255, 255, node[1]] : [0, 0, 0, node[1]];
+      }
       return {
         id: index,
         value: node[0],
-        rgbString: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
+        rgbString: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${rgb[3]})`,
         rgb,
         index,
       };
@@ -132,6 +138,11 @@ export default {
     },
     updateOption(optionName, newValue) {
       this.options[optionName] = newValue;
+      if (optionName == "opacityMode") {
+        this.render();
+        this.selectedNodes = [];
+        this.filterRange = undefined;
+      }
     },
     updateFilterRange(newRange) {
       this.filterRange = newRange;
@@ -239,6 +250,7 @@ export default {
     />
     <div
       ref="colorLine"
+      v-if="!options.opacityMode"
       :class="!computedDark ? 'color-line' : 'color-line dark'"
     >
       <canvas ref="gradientBox" class="gradient-box" />
@@ -261,6 +273,7 @@ export default {
       />
     </div>
     <color-node-list
+      v-if="!options.opacityMode"
       :nodes="colorNodes"
       :selectedNodes="selectedNodes"
       :visibleColorPicker="visibleColorPicker"
@@ -270,6 +283,19 @@ export default {
       @change="updateNodeList"
       @select="updateSelectedNodes"
       @pick="updateVisibleColorPicker"
+    />
+    <color-node-list
+      v-else
+      :opacityMode="options.opacityMode"
+      :nodes="opacityNodes"
+      :selectedNodes="selectedNodes"
+      :visibleColorPicker="undefined"
+      :nodeToTableItem="nodeToTableItem"
+      :filterRange="filterRange"
+      :dark="computedDark"
+      @change="updateOpacityNodes"
+      @select="updateSelectedNodes"
+      @pick="() => {}"
     />
   </div>
 </template>
