@@ -1,3 +1,5 @@
+trame_app/data
+
 .DS_Store
 node_modules
 .venv

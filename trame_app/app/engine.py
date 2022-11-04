@@ -1,25 +1,25 @@
 from .vtk_pipeline import VtkPipeline
 import logging
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
 DEFAULT_COLOR_MAP = [
-    [-2000, 1, 0, 0],
-    [-1000, 0, 1, 0],
-    [0, 0, 0, 1],
-    [1000, 1, 0, 1],
-    [2000, 0, 0, 0],
-    [3000, 1, 1, 1],
+    [15, 0, 0, 0],
+    [75, 0, 1, 0],
+    [100, 1, 0, 0],
+    [175, 0, 0, 1],
 ]
 
 
 DEFAULT_OPACITY_MAP = [
-    [-3000, 0],
-    [0, 0.01],
-    [2000, 0.5],
-    [4000, 1],
+    [0, 0],
+    [100, 0.2],
+    [190, 0.7],
+    [200, 1],
+    [255, 1],
 ]
 
 
@@ -32,8 +32,9 @@ def initialize(server):
     state.colormap_points = DEFAULT_COLOR_MAP
     state.opacity_points = DEFAULT_OPACITY_MAP
 
-    torso_vti = "/home/anne/data/torso.vti"
-    vtk_pipeline = VtkPipeline(torso_vti)
+    skull_vti = Path("trame_app/data/skull.vti")
+    print(skull_vti.absolute())
+    vtk_pipeline = VtkPipeline(skull_vti.absolute())
     state.histogram_data = vtk_pipeline.get_histogram_data(buckets=10)
 
     @state.change("colormap_points")

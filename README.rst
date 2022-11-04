@@ -8,6 +8,13 @@ An example Trame application
 * Free software: BSD License
 
 
+Getting data
+----------
+
+.. code-block:: console
+    wget -O trame_app/data/skull.vti https://github.com/Kitware/vtk-js-datasets/blob/master/data/vti/skull.vti?raw=true
+
+
 Installing
 ----------
 Build and install the Vue components
@@ -30,9 +37,4 @@ Run the application
 
 .. code-block:: console
 
-    trame_app
-
-Features
---------
-
-* TODO
+    trame-app
