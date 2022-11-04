@@ -4,6 +4,8 @@ trame_app/data
 node_modules
 .venv
 
+data
+
 # local env files
 .env.local
 .env.*.local
