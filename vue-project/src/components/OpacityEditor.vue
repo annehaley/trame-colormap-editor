@@ -68,9 +68,17 @@ export default {
           },
           onClick: this.clickChart,
           plugins: {
+            tooltip: {
+              callbacks: {
+                title: function (context) {
+                  return this.toTrueValue(context[0].parsed.x);
+                }.bind(this),
+              },
+            },
             legend: { display: false },
             dragData: {
               round: 1,
+              dragX: true,
               showTooltip: true,
               onDrag: (e) => {
                 e.target.style.cursor = "grabbing";
@@ -83,6 +91,17 @@ export default {
     },
   },
   methods: {
+    toTrueValue(x) {
+      return Math.round(
+        (x / 100) * (this.dataRange[1] - this.dataRange[0]) + this.dataRange[0]
+      );
+    },
+    toProportionalValue(x) {
+      return (
+        ((x - this.dataRange[0]) / (this.dataRange[1] - this.dataRange[0])) *
+        100
+      );
+    },
     completeDrag(e, dIndex, index, value) {
       e.target.style.cursor = "default";
       this.currentData[index] = value;
@@ -130,22 +149,13 @@ export default {
       // populate with input data
       this.currentData = [];
       this.opacityNodes.forEach(([x, y]) => {
-        const proportionalX =
-          ((x - this.dataRange[0]) / (this.dataRange[1] - this.dataRange[0])) *
-          100;
-        this.addDatum(proportionalX, y);
+        this.addDatum(this.toProportionalValue(x), y);
       });
     },
     update() {
       this.$emit(
         "update",
-        this.currentData.map(({ x, y }) => [
-          Math.round(
-            (x / 100) * (this.dataRange[1] - this.dataRange[0]) +
-              this.dataRange[0]
-          ),
-          y,
-        ])
+        this.currentData.map(({ x, y }) => [this.toTrueValue(x), y])
       );
     },
   },
