@@ -27,14 +27,14 @@ export default {
 <template>
   <div class="icons-row">
     <img
-      src="opacity.png"
+      src="@/icons/opacity.png"
       height="25"
       width="25"
       :class="getClassName('opacityMode')"
       @click="toggleOption('opacityMode')"
     />
     <img
-      src="histogram.png"
+      src="@/icons/histogram.png"
       height="25"
       width="25"
       :class="getClassName('showHistogram')"
