@@ -15,10 +15,42 @@ function registerPlugin(that) {
       };
       const w = width - chartMargins.x * 2;
       const h = height - chartMargins.y * 2;
-      ctx.lineWidth = 3;
-      ctx.lineCap = "round";
-      ctx.fillStyle = that.gradient;
-      if (that.dark) ctx.strokeStyle = "#fff";
+
+      const svgns = "http://www.w3.org/2000/svg";
+      const editableNodesContainer = document.getElementById(
+        "editableNodesContainer"
+      );
+      function createEditableNode(x, y, m, s, controlPoints) {
+        let primaryFill = "#000";
+        let secondaryFill = "#fff";
+        if (that.dark) {
+          primaryFill = "#fff";
+          secondaryFill = "#000";
+        }
+        // draggable node
+        var circle = document.createElementNS(svgns, "circle");
+        circle.setAttributeNS(null, "cx", x);
+        circle.setAttributeNS(null, "cy", y);
+        circle.setAttributeNS(null, "r", "3");
+        circle.setAttributeNS(null, "fill", primaryFill);
+        editableNodesContainer.appendChild(circle);
+
+        controlPoints.forEach((cp, index) => {
+          var control = document.createElementNS(svgns, "circle");
+          var shiftedX = index === 0 ? cp.x - 10 : cp.x + 10;
+          control.setAttributeNS(null, "cx", shiftedX);
+          control.setAttributeNS(null, "cy", cp.y);
+          control.setAttributeNS(null, "r", "3");
+          control.setAttributeNS(null, "stroke", primaryFill);
+          control.setAttributeNS(null, "fill", secondaryFill);
+          control.setAttributeNS(
+            null,
+            "style",
+            "position: relative; z-index: 2"
+          );
+          editableNodesContainer.appendChild(control);
+        });
+      }
 
       const contextData = that.currentData.map((point) => {
         return {
@@ -29,7 +61,11 @@ function registerPlugin(that) {
         };
       });
 
-      // draw line
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      ctx.fillStyle = that.gradient;
+      if (that.dark) ctx.strokeStyle = "#fff";
+      that.controlPoints = Array(contextData.length);
       for (var i = 0; i < contextData.length - 1; i++) {
         const pointA = contextData[i];
         const pointB = contextData[i + 1];
@@ -46,6 +82,10 @@ function registerPlugin(that) {
           y: pointB.y,
         };
         ctx.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, pointB.x, pointB.y);
+        if (!that.controlPoints[i]) that.controlPoints[i] = [];
+        if (!that.controlPoints[i + 1]) that.controlPoints[i + 1] = [];
+        that.controlPoints[i].push(cp1);
+        that.controlPoints[i + 1].push(cp2);
       }
       ctx.stroke();
       ctx.lineWidth = 0;
@@ -53,6 +93,19 @@ function registerPlugin(that) {
       ctx.lineTo(chartMargins.x, h + chartMargins.y);
       ctx.closePath();
       ctx.fill();
+
+      if (editableNodesContainer) {
+        editableNodesContainer.innerHTML = "";
+        contextData.forEach((point, index) =>
+          createEditableNode(
+            point.x,
+            point.y,
+            point.m,
+            point.s,
+            index === that.focusedPoint ? that.controlPoints[index] : []
+          )
+        );
+      }
 
       return false; // cancel datasets draw
     },
@@ -77,6 +130,8 @@ export default {
   data() {
     return {
       currentData: [],
+      controlPoints: [],
+      focusedPoint: undefined,
     };
   },
   computed: {
@@ -91,7 +146,7 @@ export default {
                 x: point.x,
                 y: point.y,
               })),
-              pointHitRadius: 25,
+              pointHitRadius: 15,
               borderColor: this.dark ? "#fff" : "#000",
             },
           ],
@@ -130,8 +185,9 @@ export default {
               round: 1,
               dragX: true,
               showTooltip: true,
-              onDrag: (e) => {
+              onDrag: (e, dIndex, index) => {
                 e.target.style.cursor = "grabbing";
+                this.focusedPoint = index;
               },
               onDragEnd: (e) => {
                 e.target.style.cursor = "default";
@@ -234,6 +290,16 @@ export default {
   <div class="curve-editor">
     <div class="responsive-size">
       <canvas id="chartJSContainer" height="50"></canvas>
+      <svg
+        id="editableNodesContainer"
+        class="nodes-container"
+        xmlns="http://www.w3.org/2000/svg"
+        width="100%"
+      />
+    </div>
+    <div class="x-labels">
+      <p>{{ dataRange[0] }}</p>
+      <p>{{ dataRange[1] }}</p>
     </div>
   </div>
 </template>
@@ -250,6 +316,18 @@ export default {
 .responsive-size {
   position: relative;
   height: 100%;
+  width: 100%;
+}
+.nodes-container {
+  position: absolute;
+  top: 0;
+  pointer-events: none;
+}
+.x-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0px 30px;
+  margin-top: -10px;
   width: 100%;
 }
 </style>

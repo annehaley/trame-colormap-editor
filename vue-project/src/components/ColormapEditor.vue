@@ -119,7 +119,9 @@ export default {
           this.computedDark
         );
       }
-      drawLabels(this.histogramData, this.$refs.histogramLabels);
+      if (!this.options.opacityMode) {
+        drawLabels(this.histogramData, this.$refs.histogramLabels);
+      }
       drawGradient(
         this.colorNodes,
         this.$refs.gradientBox,
@@ -138,11 +140,6 @@ export default {
     },
     updateOption(optionName, newValue) {
       this.options[optionName] = newValue;
-      if (optionName == "opacityMode") {
-        this.render();
-        this.selectedNodes = [];
-        this.filterRange = undefined;
-      }
     },
     updateFilterRange(newRange) {
       this.filterRange = newRange;

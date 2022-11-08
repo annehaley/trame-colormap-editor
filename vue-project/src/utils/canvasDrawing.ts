@@ -29,6 +29,7 @@ export function drawHistogram(
 }
 
 export function drawLabels(histogramData: HistogramData, labelsDiv: Element) {
+  console.log("draw labels", labelsDiv);
   labelsDiv.innerHTML = "";
 
   const labels = histogramData.range;
