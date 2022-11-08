@@ -1,11 +1,63 @@
-// Modified from
-https://raw.githubusercontent.com/chrispahm/chartjs-plugin-dragdata/master/docs/index.html
-
 <script lang="ts">
 import clamp from "../utils/clamp";
 import { Chart, registerables } from "chart.js";
 import "chartjs-plugin-dragdata";
 Chart.register(...registerables);
+
+function registerPlugin(that) {
+  Chart.register({
+    id: "advanced_line_controls",
+    beforeDatasetsDraw: (chart) => {
+      const { ctx, width, height } = chart;
+      const chartMargins = {
+        x: 30,
+        y: 10,
+      };
+      const w = width - chartMargins.x * 2;
+      const h = height - chartMargins.y * 2;
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      ctx.fillStyle = that.gradient;
+      if (that.dark) ctx.strokeStyle = "#fff";
+
+      const contextData = that.currentData.map((point) => {
+        return {
+          x: (point.x / 100) * w + chartMargins.x,
+          y: h - point.y * h + chartMargins.y,
+          m: point.m,
+          s: point.s,
+        };
+      });
+
+      // draw line
+      for (var i = 0; i < contextData.length - 1; i++) {
+        const pointA = contextData[i];
+        const pointB = contextData[i + 1];
+        if (i === 0) {
+          ctx.beginPath();
+          ctx.moveTo(pointA.x, pointA.y);
+        }
+        const cp1 = {
+          x: pointA.x + (pointB.x - pointA.x) * pointA.s,
+          y: pointA.y,
+        };
+        const cp2 = {
+          x: pointB.x - (pointB.x - pointA.x) * pointB.s,
+          y: pointB.y,
+        };
+        ctx.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, pointB.x, pointB.y);
+      }
+      ctx.stroke();
+      ctx.lineWidth = 0;
+      ctx.lineTo(w + chartMargins.x, h + chartMargins.y);
+      ctx.lineTo(chartMargins.x, h + chartMargins.y);
+      ctx.closePath();
+      ctx.fill();
+
+      return false; // cancel datasets draw
+    },
+  });
+}
 
 export default {
   props: {
@@ -22,7 +74,6 @@ export default {
       required: true,
     },
   },
-  components: {},
   data() {
     return {
       currentData: [],
@@ -36,13 +87,11 @@ export default {
           datasets: [
             {
               label: "Opacity",
-              data: this.currentData,
-              fill: true,
-              tension: 0.5,
-              borderWidth: 1,
+              data: this.currentData.map((point) => ({
+                x: point.x,
+                y: point.y,
+              })),
               pointHitRadius: 25,
-              backgroundColor: this.gradient,
-              pointBackgroundColor: this.dark ? "#fff" : "#000",
               borderColor: this.dark ? "#fff" : "#000",
             },
           ],
@@ -68,6 +117,7 @@ export default {
           },
           onClick: this.clickChart,
           plugins: {
+            advanced_line_controls: true,
             tooltip: {
               callbacks: {
                 title: function (context) {
@@ -83,7 +133,9 @@ export default {
               onDrag: (e) => {
                 e.target.style.cursor = "grabbing";
               },
-              onDragEnd: this.completeDrag,
+              onDragEnd: (e) => {
+                e.target.style.cursor = "default";
+              },
             },
           },
         },
@@ -102,11 +154,6 @@ export default {
         100
       );
     },
-    completeDrag(e, dIndex, index, value) {
-      e.target.style.cursor = "default";
-      this.currentData[index] = value;
-      this.update();
-    },
     insertSortedByFunction(array, value, func) {
       // from https://stackoverflow.com/a/21822316
       var low = 0;
@@ -120,7 +167,7 @@ export default {
       array.splice(low, 0, value);
       return array;
     },
-    addDatum(x, y) {
+    addDatum(x, y, m, s) {
       this.chartInstance.data.labels = this.insertSortedByFunction(
         this.chartInstance.data.labels,
         x,
@@ -128,7 +175,7 @@ export default {
       );
       this.currentData = this.insertSortedByFunction(
         this.currentData,
-        { x, y },
+        { x, y, m, s },
         (a, b) => a.x < b.x
       );
       this.chartInstance.data.datasets[0].data = this.currentData;
@@ -142,24 +189,26 @@ export default {
         0,
         1
       );
-      this.addDatum(x, y);
+      this.addDatum(x, y, 0.5, 0);
       this.update();
     },
     render() {
       // populate with input data
       this.currentData = [];
-      this.opacityNodes.forEach(([x, y]) => {
-        this.addDatum(this.toProportionalValue(x), y);
+      this.opacityNodes.forEach(([x, y, m, s]) => {
+        this.addDatum(this.toProportionalValue(x), y, m, s);
       });
     },
     update() {
       this.$emit(
         "update",
-        this.currentData.map(({ x, y }) => [this.toTrueValue(x), y])
+        this.currentData.map(({ x, y, m, s }) => [this.toTrueValue(x), y, m, s])
       );
     },
   },
   mounted() {
+    registerPlugin(this);
+
     this.canvas = document.getElementById(
       "chartJSContainer"
     ) as HTMLCanvasElement;
