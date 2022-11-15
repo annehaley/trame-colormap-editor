@@ -1,5 +1,6 @@
 <script lang="ts">
 import clamp from "../utils/clamp";
+import { makeDraggableSVG } from "../utils/drag";
 import { Chart, registerables } from "chart.js";
 import "chartjs-plugin-dragdata";
 Chart.register(...registerables);
@@ -15,77 +16,29 @@ function registerPlugin(that) {
       };
       const w = width - chartMargins.x * 2;
       const h = height - chartMargins.y * 2;
-
-      const svgns = "http://www.w3.org/2000/svg";
-      const editableNodesContainer = document.getElementById(
-        "editableNodesContainer"
-      );
-      function createEditableNode(x, y, m, s, controlPoints) {
-        let primaryFill = "#000";
-        let secondaryFill = "#fff";
-        if (that.dark) {
-          primaryFill = "#fff";
-          secondaryFill = "#000";
-        }
-        // draggable node
-        var circle = document.createElementNS(svgns, "circle");
-        circle.setAttributeNS(null, "cx", x);
-        circle.setAttributeNS(null, "cy", y);
-        circle.setAttributeNS(null, "r", "3");
-        circle.setAttributeNS(null, "fill", primaryFill);
-        editableNodesContainer.appendChild(circle);
-
-        controlPoints.forEach((cp, index) => {
-          var control = document.createElementNS(svgns, "circle");
-          var shiftedX = index === 0 ? cp.x - 10 : cp.x + 10;
-          control.setAttributeNS(null, "cx", shiftedX);
-          control.setAttributeNS(null, "cy", cp.y);
-          control.setAttributeNS(null, "r", "3");
-          control.setAttributeNS(null, "stroke", primaryFill);
-          control.setAttributeNS(null, "fill", secondaryFill);
-          control.setAttributeNS(
-            null,
-            "style",
-            "position: relative; z-index: 2"
-          );
-          editableNodesContainer.appendChild(control);
-        });
-      }
-
-      const contextData = that.currentData.map((point) => {
+      function toContextCoords(point) {
         return {
           x: (point.x / 100) * w + chartMargins.x,
           y: h - point.y * h + chartMargins.y,
-          m: point.m,
-          s: point.s,
         };
-      });
+      }
 
       ctx.lineWidth = 3;
       ctx.lineCap = "round";
       ctx.fillStyle = that.gradient;
       if (that.dark) ctx.strokeStyle = "#fff";
-      that.controlPoints = Array(contextData.length);
-      for (var i = 0; i < contextData.length - 1; i++) {
-        const pointA = contextData[i];
-        const pointB = contextData[i + 1];
+      for (var i = 0; i < that.currentData.length - 1; i++) {
+        const pointA = toContextCoords(that.currentData[i]);
+        const pointB = toContextCoords(that.currentData[i + 1]);
+        const cp1 = toContextCoords(
+          that.controlPoints[i][that.controlPoints[i].length - 1]
+        );
+        const cp2 = toContextCoords(that.controlPoints[i + 1][0]);
         if (i === 0) {
           ctx.beginPath();
           ctx.moveTo(pointA.x, pointA.y);
         }
-        const cp1 = {
-          x: pointA.x + (pointB.x - pointA.x) * pointA.s,
-          y: pointA.y,
-        };
-        const cp2 = {
-          x: pointB.x - (pointB.x - pointA.x) * pointB.s,
-          y: pointB.y,
-        };
         ctx.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, pointB.x, pointB.y);
-        if (!that.controlPoints[i]) that.controlPoints[i] = [];
-        if (!that.controlPoints[i + 1]) that.controlPoints[i + 1] = [];
-        that.controlPoints[i].push(cp1);
-        that.controlPoints[i + 1].push(cp2);
       }
       ctx.stroke();
       ctx.lineWidth = 0;
@@ -94,18 +47,7 @@ function registerPlugin(that) {
       ctx.closePath();
       ctx.fill();
 
-      if (editableNodesContainer) {
-        editableNodesContainer.innerHTML = "";
-        contextData.forEach((point, index) =>
-          createEditableNode(
-            point.x,
-            point.y,
-            point.m,
-            point.s,
-            index === that.focusedPoint ? that.controlPoints[index] : []
-          )
-        );
-      }
+      that.drawDraggables(toContextCoords);
 
       return false; // cancel datasets draw
     },
@@ -234,8 +176,25 @@ export default {
         { x, y, m, s },
         (a, b) => a.x < b.x
       );
-      this.chartInstance.data.datasets[0].data = this.currentData;
-      this.chartInstance.update();
+    },
+    populateControlPoints() {
+      this.controlPoints = Array(this.currentData.length);
+      for (var i = 0; i < this.currentData.length - 1; i++) {
+        if (!this.controlPoints[i]) this.controlPoints[i] = [];
+        if (!this.controlPoints[i + 1]) this.controlPoints[i + 1] = [];
+        const pointA = this.currentData[i];
+        const pointB = this.currentData[i + 1];
+        const cp1 = {
+          x: pointA.x + (pointB.x - pointA.x) * pointA.s,
+          y: pointA.y,
+        };
+        const cp2 = {
+          x: pointB.x - (pointB.x - pointA.x) * pointB.s,
+          y: pointB.y,
+        };
+        this.controlPoints[i].push(cp1);
+        this.controlPoints[i + 1].push(cp2);
+      }
     },
     clickChart(e) {
       const { height, width } = e.chart.chartArea;
@@ -248,12 +207,80 @@ export default {
       this.addDatum(x, y, 0.5, 0);
       this.update();
     },
+    drawDraggables(toContextMapper) {
+      const svgns = "http://www.w3.org/2000/svg";
+      const editableNodesContainer = this.$refs.editableNodesContainer;
+      if (!editableNodesContainer) return undefined;
+      editableNodesContainer.innerHTML = "";
+      let primaryFill = "#000";
+      let secondaryFill = "#fff";
+      if (this.dark) {
+        primaryFill = "#fff";
+        secondaryFill = "#000";
+      }
+
+      this.currentData.map(toContextMapper).forEach((point) => {
+        this.drawDraggableNode(
+          point.x,
+          point.y,
+          svgns,
+          editableNodesContainer,
+          primaryFill
+        );
+      });
+      if (this.focusedPoint) {
+        this.controlPoints[this.focusedPoint]
+          .map(toContextMapper)
+          .forEach((cp, index) => {
+            this.drawDraggableControlPoint(
+              cp.x,
+              cp.y,
+              index,
+              svgns,
+              editableNodesContainer,
+              primaryFill,
+              secondaryFill
+            );
+          });
+      }
+    },
+    drawDraggableNode(x, y, svgns, container, fill) {
+      var circle = document.createElementNS(svgns, "circle");
+      circle.setAttributeNS(null, "cx", x);
+      circle.setAttributeNS(null, "cy", y);
+      circle.setAttributeNS(null, "r", "3");
+      circle.setAttributeNS(null, "fill", fill);
+      container.appendChild(circle);
+    },
+    drawDraggableControlPoint(
+      x,
+      y,
+      index,
+      svgns,
+      container,
+      primaryFill,
+      secondaryFill
+    ) {
+      var control = document.createElementNS(svgns, "circle");
+      var shiftedX = index === 0 ? x - 10 : x + 10;
+      control.setAttributeNS(null, "cx", shiftedX);
+      control.setAttributeNS(null, "cy", y);
+      control.setAttributeNS(null, "r", "5");
+      control.setAttributeNS(null, "stroke", primaryFill);
+      control.setAttributeNS(null, "fill", secondaryFill);
+      control.setAttributeNS(null, "class", "draggable");
+      control.setAttributeNS(null, "pointer-events", "all");
+      container.appendChild(control);
+    },
     render() {
       // populate with input data
       this.currentData = [];
       this.opacityNodes.forEach(([x, y, m, s]) => {
         this.addDatum(this.toProportionalValue(x), y, m, s);
       });
+      this.populateControlPoints();
+      this.chartInstance.data.datasets[0].data = this.currentData;
+      this.chartInstance.update();
     },
     update() {
       this.$emit(
@@ -277,10 +304,15 @@ export default {
 
     this.chartInstance = new Chart(this.ctx, this.chartOptions);
     this.render();
+
+    makeDraggableSVG(this.$refs.editableNodesContainer);
   },
   watch: {
-    opacityNodes() {
-      this.render();
+    opacityNodes: {
+      handler() {
+        this.render();
+      },
+      deep: true,
     },
   },
 };
@@ -291,7 +323,7 @@ export default {
     <div class="responsive-size">
       <canvas id="chartJSContainer" height="50"></canvas>
       <svg
-        id="editableNodesContainer"
+        ref="editableNodesContainer"
         class="nodes-container"
         xmlns="http://www.w3.org/2000/svg"
         width="100%"
