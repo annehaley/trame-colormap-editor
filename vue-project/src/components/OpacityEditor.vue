@@ -68,6 +68,10 @@ export default {
       type: Array,
       required: true,
     },
+    selectedNodes: {
+      type: Array,
+      required: true,
+    },
   },
   data() {
     return {
@@ -129,7 +133,15 @@ export default {
               showTooltip: true,
               onDrag: (e, dIndex, index) => {
                 e.target.style.cursor = "grabbing";
-                this.focusedPoint = index;
+                const point = this.opacityNodes[index];
+                this.$emit("select", [
+                  {
+                    id: index,
+                    index,
+                    rgb: [0, 0, 0, point[1]],
+                    rgbString: `rgb(0, 0, 0, ${point[1]})`,
+                  },
+                ]);
               },
               onDragEnd: (e) => {
                 e.target.style.cursor = "default";
@@ -206,6 +218,12 @@ export default {
       );
       this.addDatum(x, y, 0.5, 0);
       this.update();
+    },
+    focusSelected() {
+      if (this.selectedNodes.length > 0) {
+        this.focusedPoint = this.selectedNodes[0].index;
+      }
+      this.chartInstance.update();
     },
     drawDraggables(toContextMapper) {
       const svgns = "http://www.w3.org/2000/svg";
@@ -306,11 +324,18 @@ export default {
     this.render();
 
     makeDraggableSVG(this.$refs.editableNodesContainer);
+    this.focusSelected();
   },
   watch: {
     opacityNodes: {
       handler() {
         this.render();
+      },
+      deep: true,
+    },
+    selectedNodes: {
+      handler() {
+        this.focusSelected();
       },
       deep: true,
     },

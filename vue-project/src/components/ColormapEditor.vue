@@ -232,9 +232,11 @@ export default {
     <opacity-editor
       v-if="options.opacityMode"
       :opacityNodes="opacityNodes"
+      :selectedNodes="selectedNodes"
       :dark="computedDark"
       :dataRange="dataRange"
       @update="updateOpacityNodes"
+      @select="updateSelectedNodes"
     />
     <div
       ref="histogramLabels"
