@@ -17,12 +17,14 @@ function registerPlugin(that) {
       const w = width - chartMargins.x * 2;
       const h = height - chartMargins.y * 2;
       that.toContextCoords = (point) => {
+        if (!point) return undefined;
         return {
           x: (point.x / 100) * w + chartMargins.x,
           y: h - point.y * h + chartMargins.y,
         };
       };
       that.toRealData = (location) => {
+        if (!location) return undefined;
         return {
           x: ((location.x - chartMargins.x) / w) * 100,
           y: ((location.y - chartMargins.y - h) * -1) / h,
@@ -148,6 +150,7 @@ export default {
                     rgbString: `rgb(0, 0, 0, ${point[1]})`,
                   },
                 ]);
+                this.update();
               },
               onDragEnd: (e) => {
                 e.target.style.cursor = "default";
@@ -197,6 +200,7 @@ export default {
     },
     populateControlPoints() {
       this.controlPoints = Array(this.currentData.length);
+      this.controlPoints[0] = [undefined];
       for (var i = 0; i < this.currentData.length - 1; i++) {
         if (!this.controlPoints[i]) this.controlPoints[i] = [];
         if (!this.controlPoints[i + 1]) this.controlPoints[i + 1] = [];
@@ -253,19 +257,21 @@ export default {
           primaryFill
         );
       });
-      if (this.focusedPoint) {
+      if (this.focusedPoint !== undefined) {
         this.controlPoints[this.focusedPoint]
           .map(this.toContextCoords)
           .forEach((cp, index) => {
-            this.drawDraggableControlPoint(
-              cp.x,
-              cp.y,
-              index,
-              svgns,
-              editableNodesContainer,
-              primaryFill,
-              secondaryFill
-            );
+            if (cp) {
+              this.drawDraggableControlPoint(
+                cp.x,
+                cp.y,
+                index,
+                svgns,
+                editableNodesContainer,
+                primaryFill,
+                secondaryFill
+              );
+            }
           });
       }
     },
@@ -298,11 +304,32 @@ export default {
       control.setAttributeNS(null, "pointer-events", "all");
       container.appendChild(control);
     },
+    validateControlPointDrag(selected, newLocation) {
+      let moveX = true;
+      let moveY = true;
+      const newReal = this.toRealData(newLocation);
+      if (newReal.y > 1 || newReal.y < 0) moveY = false;
+      const rightPoint =
+        parseInt(selected.id) ===
+        this.controlPoints[this.focusedPoint].length - 1;
+      let pointA;
+      let pointB;
+      if (rightPoint && this.focusedPoint < this.currentData.length - 1) {
+        pointA = this.currentData[this.focusedPoint];
+        pointB = this.currentData[this.focusedPoint + 1];
+      } else if (!rightPoint && this.focusedPoint > 0) {
+        pointA = this.currentData[this.focusedPoint - 1];
+        pointB = this.currentData[this.focusedPoint];
+      } else moveX = false;
+      if (newReal.x < pointA.x || newReal.x > pointB.x) moveX = false;
+      return [moveX, moveY];
+    },
     dragControlPoint(selected, newLocation) {
       if (!this.toRealData) return;
       this.controlPoints[this.focusedPoint][parseInt(selected.id)] =
         this.toRealData(newLocation);
       this.chartInstance.update();
+      // this.update();
     },
     render() {
       // populate with input data
@@ -317,28 +344,36 @@ export default {
     update() {
       this.$emit(
         "update",
-        this.currentData.map(({ x, y, m, s }) => [this.toTrueValue(x), y, m, s])
+        this.currentData.map(({ x, y, m, s }, index) => {
+          // const controlPoints = this.controlPoints[index];
+          // console.log(controlPoints);
+          return [this.toTrueValue(x), y, m, s];
+        })
       );
     },
   },
-  mounted() {
+  created() {
     registerPlugin(this);
-
+  },
+  mounted() {
     this.canvas = document.getElementById(
       "chartJSContainer"
     ) as HTMLCanvasElement;
     this.ctx = this.canvas.getContext("2d");
+    this.chartInstance = new Chart(this.ctx, this.chartOptions);
 
     // create gradient fill
     this.gradient = this.ctx.createLinearGradient(0, 0, 0, 100);
     this.gradient.addColorStop(1, "transparent");
     this.gradient.addColorStop(0, this.dark ? "white" : "black");
 
-    this.chartInstance = new Chart(this.ctx, this.chartOptions);
-    this.render();
-
-    makeDraggableSVG(this.$refs.editableNodesContainer, this.dragControlPoint);
+    makeDraggableSVG(
+      this.$refs.editableNodesContainer,
+      this.validateControlPointDrag,
+      this.dragControlPoint
+    );
     this.focusSelected();
+    this.render();
   },
   watch: {
     opacityNodes: {
