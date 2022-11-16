@@ -90,3 +90,54 @@ export function listenDragSelection(
   element.onmousedown = dragMouseDown;
   element.onmouseup = dragMouseUp;
 }
+
+export function makeDraggableSVG(
+  svg: SVGGraphicsElement,
+  callback: CallableFunction
+) {
+  let selectedShape: HTMLElement | undefined = undefined;
+  let posOffset: Record<string, number> | undefined = undefined;
+  svg.addEventListener("mousedown", startDrag as EventListener);
+  window.addEventListener("mousemove", drag as EventListener);
+  window.addEventListener("mouseup", endDrag as EventListener);
+
+  function getMousePosition(evt: MouseEvent) {
+    if (!svg) return { x: 0, y: 0 };
+    const CTM = svg.getScreenCTM();
+    if (!CTM) return { x: 0, y: 0 };
+    return {
+      x: (evt.clientX - CTM.e) / CTM.a,
+      y: (evt.clientY - CTM.f) / CTM.d,
+    };
+  }
+
+  function startDrag(evt: MouseEvent) {
+    const target = evt.target as HTMLElement;
+    if (target && target.classList.contains("draggable")) {
+      selectedShape = target;
+      posOffset = getMousePosition(evt);
+      posOffset.x -= parseFloat(
+        selectedShape.getAttributeNS(null, "cx") || "0"
+      );
+      posOffset.y -= parseFloat(
+        selectedShape.getAttributeNS(null, "cy") || "0"
+      );
+    }
+  }
+  function drag(evt: MouseEvent) {
+    if (selectedShape) {
+      evt.preventDefault();
+      const coord = getMousePosition(evt);
+      if (posOffset) {
+        coord.x -= posOffset.x;
+        coord.y -= posOffset.y;
+      }
+      selectedShape.setAttributeNS(null, "cx", `${coord.x}`);
+      selectedShape.setAttributeNS(null, "cy", `${coord.y}`);
+      callback(selectedShape, coord);
+    }
+  }
+  function endDrag() {
+    selectedShape = undefined;
+  }
+}

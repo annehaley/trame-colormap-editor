@@ -16,24 +16,30 @@ function registerPlugin(that) {
       };
       const w = width - chartMargins.x * 2;
       const h = height - chartMargins.y * 2;
-      function toContextCoords(point) {
+      that.toContextCoords = (point) => {
         return {
           x: (point.x / 100) * w + chartMargins.x,
           y: h - point.y * h + chartMargins.y,
         };
-      }
+      };
+      that.toRealData = (location) => {
+        return {
+          x: ((location.x - chartMargins.x) / w) * 100,
+          y: ((location.y - chartMargins.y - h) * -1) / h,
+        };
+      };
 
       ctx.lineWidth = 3;
       ctx.lineCap = "round";
       ctx.fillStyle = that.gradient;
       if (that.dark) ctx.strokeStyle = "#fff";
       for (var i = 0; i < that.currentData.length - 1; i++) {
-        const pointA = toContextCoords(that.currentData[i]);
-        const pointB = toContextCoords(that.currentData[i + 1]);
-        const cp1 = toContextCoords(
+        const pointA = that.toContextCoords(that.currentData[i]);
+        const pointB = that.toContextCoords(that.currentData[i + 1]);
+        const cp1 = that.toContextCoords(
           that.controlPoints[i][that.controlPoints[i].length - 1]
         );
-        const cp2 = toContextCoords(that.controlPoints[i + 1][0]);
+        const cp2 = that.toContextCoords(that.controlPoints[i + 1][0]);
         if (i === 0) {
           ctx.beginPath();
           ctx.moveTo(pointA.x, pointA.y);
@@ -47,7 +53,7 @@ function registerPlugin(that) {
       ctx.closePath();
       ctx.fill();
 
-      that.drawDraggables(toContextCoords);
+      that.drawDraggables();
 
       return false; // cancel datasets draw
     },
@@ -225,10 +231,11 @@ export default {
       }
       this.chartInstance.update();
     },
-    drawDraggables(toContextMapper) {
+    drawDraggables() {
       const svgns = "http://www.w3.org/2000/svg";
       const editableNodesContainer = this.$refs.editableNodesContainer;
-      if (!editableNodesContainer) return undefined;
+      if (!editableNodesContainer || !this.toContextCoords) return undefined;
+
       editableNodesContainer.innerHTML = "";
       let primaryFill = "#000";
       let secondaryFill = "#fff";
@@ -237,7 +244,7 @@ export default {
         secondaryFill = "#000";
       }
 
-      this.currentData.map(toContextMapper).forEach((point) => {
+      this.currentData.map(this.toContextCoords).forEach((point) => {
         this.drawDraggableNode(
           point.x,
           point.y,
@@ -248,7 +255,7 @@ export default {
       });
       if (this.focusedPoint) {
         this.controlPoints[this.focusedPoint]
-          .map(toContextMapper)
+          .map(this.toContextCoords)
           .forEach((cp, index) => {
             this.drawDraggableControlPoint(
               cp.x,
@@ -287,8 +294,15 @@ export default {
       control.setAttributeNS(null, "stroke", primaryFill);
       control.setAttributeNS(null, "fill", secondaryFill);
       control.setAttributeNS(null, "class", "draggable");
+      control.setAttributeNS(null, "id", index);
       control.setAttributeNS(null, "pointer-events", "all");
       container.appendChild(control);
+    },
+    dragControlPoint(selected, newLocation) {
+      if (!this.toRealData) return;
+      this.controlPoints[this.focusedPoint][parseInt(selected.id)] =
+        this.toRealData(newLocation);
+      this.chartInstance.update();
     },
     render() {
       // populate with input data
@@ -323,7 +337,7 @@ export default {
     this.chartInstance = new Chart(this.ctx, this.chartOptions);
     this.render();
 
-    makeDraggableSVG(this.$refs.editableNodesContainer);
+    makeDraggableSVG(this.$refs.editableNodesContainer, this.dragControlPoint);
     this.focusSelected();
   },
   watch: {
