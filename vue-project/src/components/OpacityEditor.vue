@@ -21,6 +21,8 @@ function registerPlugin(that) {
         return {
           x: (point.x / 100) * w + chartMargins.x,
           y: h - point.y * h + chartMargins.y,
+          m: point.m,
+          s: point.s,
         };
       };
       that.toRealData = (location) => {
@@ -36,17 +38,33 @@ function registerPlugin(that) {
       ctx.fillStyle = that.gradient;
       if (that.dark) ctx.strokeStyle = "#fff";
       for (var i = 0; i < that.currentData.length - 1; i++) {
-        const pointA = that.toContextCoords(that.currentData[i]);
-        const pointB = that.toContextCoords(that.currentData[i + 1]);
-        const cp1 = that.toContextCoords(
-          that.controlPoints[i][that.controlPoints[i].length - 1]
-        );
-        const cp2 = that.toContextCoords(that.controlPoints[i + 1][0]);
+        let pointA = that.toContextCoords(that.currentData[i]);
+        let pointB = that.toContextCoords(that.currentData[i + 1]);
+        const midpoint = {
+          x: pointA.x + (pointB.x - pointA.x) * pointA.m,
+          y: pointA.y + (pointB.y - pointA.y) * 0.5,
+        };
+
         if (i === 0) {
           ctx.beginPath();
           ctx.moveTo(pointA.x, pointA.y);
         }
-        ctx.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, pointB.x, pointB.y);
+        ctx.bezierCurveTo(
+          pointA.x + (midpoint.x - pointA.x) * pointA.s,
+          pointA.y,
+          midpoint.x,
+          midpoint.y - (midpoint.y - pointA.y) * pointA.s,
+          midpoint.x,
+          midpoint.y
+        );
+        ctx.bezierCurveTo(
+          midpoint.x,
+          midpoint.y + (pointB.y - midpoint.y) * pointA.s,
+          pointB.x - (pointB.x - midpoint.x) * pointA.s,
+          pointB.y,
+          pointB.x,
+          pointB.y
+        );
       }
       ctx.stroke();
       ctx.lineWidth = 0;
@@ -54,8 +72,6 @@ function registerPlugin(that) {
       ctx.lineTo(chartMargins.x, h + chartMargins.y);
       ctx.closePath();
       ctx.fill();
-
-      that.drawDraggables();
 
       return false; // cancel datasets draw
     },
@@ -84,7 +100,6 @@ export default {
   data() {
     return {
       currentData: [],
-      controlPoints: [],
       focusedPoint: undefined,
     };
   },
@@ -198,26 +213,6 @@ export default {
         (a, b) => a.x < b.x
       );
     },
-    populateControlPoints() {
-      this.controlPoints = Array(this.currentData.length);
-      this.controlPoints[0] = [undefined];
-      for (var i = 0; i < this.currentData.length - 1; i++) {
-        if (!this.controlPoints[i]) this.controlPoints[i] = [];
-        if (!this.controlPoints[i + 1]) this.controlPoints[i + 1] = [];
-        const pointA = this.currentData[i];
-        const pointB = this.currentData[i + 1];
-        const cp1 = {
-          x: pointA.x + (pointB.x - pointA.x) * pointA.s,
-          y: pointA.y,
-        };
-        const cp2 = {
-          x: pointB.x - (pointB.x - pointA.x) * pointB.s,
-          y: pointB.y,
-        };
-        this.controlPoints[i].push(cp1);
-        this.controlPoints[i + 1].push(cp2);
-      }
-    },
     clickChart(e) {
       const { height, width } = e.chart.chartArea;
       const x = clamp(Math.round(((e.x - 40) / width) * 100), 0, 100);
@@ -257,10 +252,21 @@ export default {
           primaryFill
         );
       });
-      if (this.focusedPoint !== undefined) {
-        this.controlPoints[this.focusedPoint]
+      if (
+        this.focusedPoint &&
+        this.focusedPoint < this.currentData.length - 1
+      ) {
+        const pointA = this.currentData[this.focusedPoint];
+        const pointB = this.currentData[this.focusedPoint + 1];
+        const pointC = this.currentData[this.focusedPoint - 1];
+        const focusedControlPoints = [
+          { x: pointA.x, y: (pointB.y - pointA.y) * pointA.s + pointA.y },
+          { x: (pointB.x - pointA.x) * pointA.m + pointA.x, y: pointA.y },
+          { x: pointC.x + (pointA.x - pointC.x) * pointC.m, y: pointA.y },
+        ];
+        focusedControlPoints
           .map(this.toContextCoords)
-          .forEach((cp, index) => {
+          .forEach((cp: { x: number; y: number }, index) => {
             if (cp) {
               this.drawDraggableControlPoint(
                 cp.x,
@@ -293,9 +299,11 @@ export default {
       secondaryFill
     ) {
       var control = document.createElementNS(svgns, "circle");
-      var shiftedX = index === 0 ? x - 10 : x + 10;
-      control.setAttributeNS(null, "cx", shiftedX);
-      control.setAttributeNS(null, "cy", y);
+      var shifted = { x, y: y - 15 };
+      if (index === 1) shifted = { x: x + 20, y };
+      if (index === 2) shifted = { x: x - 20, y };
+      control.setAttributeNS(null, "cx", `${shifted.x}`);
+      control.setAttributeNS(null, "cy", `${shifted.y}`);
       control.setAttributeNS(null, "r", "5");
       control.setAttributeNS(null, "stroke", primaryFill);
       control.setAttributeNS(null, "fill", secondaryFill);
@@ -305,51 +313,77 @@ export default {
       container.appendChild(control);
     },
     validateControlPointDrag(selected, newLocation) {
-      let moveX = true;
-      let moveY = true;
-      const newReal = this.toRealData(newLocation);
-      if (newReal.y > 1 || newReal.y < 0) moveY = false;
-      const rightPoint =
-        parseInt(selected.id) ===
-        this.controlPoints[this.focusedPoint].length - 1;
-      let pointA;
-      let pointB;
-      if (rightPoint && this.focusedPoint < this.currentData.length - 1) {
-        pointA = this.currentData[this.focusedPoint];
-        pointB = this.currentData[this.focusedPoint + 1];
-      } else if (!rightPoint && this.focusedPoint > 0) {
-        pointA = this.currentData[this.focusedPoint - 1];
-        pointB = this.currentData[this.focusedPoint];
-      } else moveX = false;
-      if (newReal.x < pointA.x || newReal.x > pointB.x) moveX = false;
-      return [moveX, moveY];
+      if (
+        this.focusedPoint &&
+        this.focusedPoint < this.currentData.length - 1
+      ) {
+        let moveX = true;
+        let moveY = true;
+        const newReal = this.toRealData(newLocation);
+        if (newReal.y > 1 || newReal.y < 0) moveY = false;
+        let pointA = this.currentData[this.focusedPoint];
+        let pointB = this.currentData[this.focusedPoint + 1];
+        let pointC = this.currentData[this.focusedPoint - 1];
+        if (selected.id === "1") {
+          moveY = false;
+          if (newReal.x < pointA.x || newReal.x > pointB.x) moveX = false;
+        } else if (selected.id === "2") {
+          moveY = false;
+          if (newReal.x < pointC.x || newReal.x > pointA.x) moveX = false;
+        } else if (selected.id === "0") {
+          moveX = false;
+          if (pointA.y < pointB.y) {
+            if (newReal.y < pointA.y || newReal.y > pointB.y) moveY = false;
+          } else {
+            if (newReal.y < pointB.y || newReal.y > pointA.y) moveY = false;
+          }
+        }
+        return [moveX, moveY];
+      }
+      return [false, false];
     },
     dragControlPoint(selected, newLocation) {
       if (!this.toRealData) return;
-      this.controlPoints[this.focusedPoint][parseInt(selected.id)] =
-        this.toRealData(newLocation);
+      newLocation = this.toRealData(newLocation);
+      if (this.focusedPoint < this.currentData.length - 1) {
+        const pointA = this.currentData[this.focusedPoint];
+        const pointB = this.currentData[this.focusedPoint + 1];
+        const pointC = this.currentData[this.focusedPoint - 1];
+        if (selected.id === "0") {
+          // vertical cp; controls sharpness
+          const percentage = (newLocation.y - pointA.y) / (pointB.y - pointA.y);
+          this.currentData[this.focusedPoint].s = percentage;
+          // control left-side sharpness if left side exists
+          if (this.focusedPoint > 0) {
+            this.currentData[this.focusedPoint - 1].s = percentage;
+          }
+        } else if (selected.id === "1") {
+          // horizontal cp; controls midpoint
+          const percentage = (newLocation.x - pointA.x) / (pointB.x - pointA.x);
+          this.currentData[this.focusedPoint].m = percentage;
+        } else if (selected.id === "2") {
+          // horizontal cp; controls previous midpoint
+          const percentage = (newLocation.x - pointC.x) / (pointA.x - pointC.x);
+          this.currentData[this.focusedPoint - 1].m = percentage;
+        }
+      }
       this.chartInstance.update();
-      // this.update();
+      this.update();
     },
-    render() {
-      // populate with input data
+    populate() {
       this.currentData = [];
       this.opacityNodes.forEach(([x, y, m, s]) => {
         this.addDatum(this.toProportionalValue(x), y, m, s);
       });
-      this.populateControlPoints();
       this.chartInstance.data.datasets[0].data = this.currentData;
       this.chartInstance.update();
+      this.drawDraggables();
     },
     update() {
-      this.$emit(
-        "update",
-        this.currentData.map(({ x, y, m, s }, index) => {
-          // const controlPoints = this.controlPoints[index];
-          // console.log(controlPoints);
-          return [this.toTrueValue(x), y, m, s];
-        })
-      );
+      const newList = this.currentData.map(({ x, y, m, s }) => {
+        return [this.toTrueValue(x), y, m, s];
+      });
+      this.$emit("update", newList);
     },
   },
   created() {
@@ -373,12 +407,12 @@ export default {
       this.dragControlPoint
     );
     this.focusSelected();
-    this.render();
+    this.populate();
   },
   watch: {
     opacityNodes: {
       handler() {
-        this.render();
+        this.populate();
       },
       deep: true,
     },
