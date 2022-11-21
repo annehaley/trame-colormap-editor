@@ -5,33 +5,18 @@ import { Chart, registerables } from "chart.js";
 import "chartjs-plugin-dragdata";
 Chart.register(...registerables);
 
-function registerPlugin(that) {
+const chartMargins = {
+  x: 30,
+  y: 10,
+};
+
+function registerPlugin() {
   Chart.register({
     id: "advanced_line_controls",
     beforeDatasetsDraw: (chart) => {
-      const { ctx, width, height } = chart;
-      const chartMargins = {
-        x: 30,
-        y: 10,
-      };
-      const w = width - chartMargins.x * 2;
-      const h = height - chartMargins.y * 2;
-      that.toContextCoords = (point) => {
-        if (!point) return undefined;
-        return {
-          x: (point.x / 100) * w + chartMargins.x,
-          y: h - point.y * h + chartMargins.y,
-          m: point.m,
-          s: point.s,
-        };
-      };
-      that.toRealData = (location) => {
-        if (!location) return undefined;
-        return {
-          x: ((location.x - chartMargins.x) / w) * 100,
-          y: ((location.y - chartMargins.y - h) * -1) / h,
-        };
-      };
+      const that = chart.config.options.plugins["advanced_line_controls"];
+      const { ctx } = chart;
+      const { w, h } = that.dims;
 
       ctx.lineWidth = 3;
       ctx.lineCap = "round";
@@ -141,7 +126,7 @@ export default {
           },
           onClick: this.clickChart,
           plugins: {
-            advanced_line_controls: true,
+            advanced_line_controls: this,
             tooltip: {
               callbacks: {
                 title: function (context) {
@@ -175,8 +160,33 @@ export default {
         },
       };
     },
+    dims() {
+      const chart = this.$refs.chartJSContainer;
+      const { width, height } = chart;
+      const w = width - chartMargins.x * 2;
+      const h = height - chartMargins.y * 2;
+      return { w, h };
+    },
   },
   methods: {
+    toContextCoords(point) {
+      if (!point) return undefined;
+      const { w, h } = this.dims;
+      return {
+        x: (point.x / 100) * w + chartMargins.x,
+        y: h - point.y * h + chartMargins.y,
+        m: point.m,
+        s: point.s,
+      };
+    },
+    toRealData(location) {
+      if (!location) return undefined;
+      const { w, h } = this.dims;
+      return {
+        x: ((location.x - chartMargins.x) / w) * 100,
+        y: ((location.y - chartMargins.y - h) * -1) / h,
+      };
+    },
     toTrueValue(x) {
       return Math.round(
         (x / 100) * (this.dataRange[1] - this.dataRange[0]) + this.dataRange[0]
@@ -233,7 +243,7 @@ export default {
     drawDraggables() {
       const svgns = "http://www.w3.org/2000/svg";
       const editableNodesContainer = this.$refs.editableNodesContainer;
-      if (!editableNodesContainer || !this.toContextCoords) return undefined;
+      if (!editableNodesContainer) return undefined;
 
       editableNodesContainer.innerHTML = "";
       let primaryFill = "#000";
@@ -343,7 +353,6 @@ export default {
       return [false, false];
     },
     dragControlPoint(selected, newLocation) {
-      if (!this.toRealData) return;
       newLocation = this.toRealData(newLocation);
       if (this.focusedPoint < this.currentData.length - 1) {
         const pointA = this.currentData[this.focusedPoint];
@@ -387,7 +396,7 @@ export default {
     },
   },
   created() {
-    registerPlugin(this);
+    registerPlugin();
   },
   mounted() {
     this.canvas = document.getElementById(
@@ -429,7 +438,7 @@ export default {
 <template>
   <div class="curve-editor">
     <div class="responsive-size">
-      <canvas id="chartJSContainer" height="50"></canvas>
+      <canvas id="chartJSContainer" ref="chartJSContainer" height="50"></canvas>
       <svg
         ref="editableNodesContainer"
         class="nodes-container"
