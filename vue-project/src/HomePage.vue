@@ -23,9 +23,9 @@ export default defineComponent({
     ];
 
     const opacities = [
-      [-2048, 1],
-      [511.5, 0.5],
-      [3071, 1],
+      [-2048, 1, 0.5, 0],
+      [511.5, 0.5, 0.5, 0],
+      [3071, 1, 0.5, 0],
     ];
 
     return {

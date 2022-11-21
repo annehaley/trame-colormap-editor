@@ -107,7 +107,7 @@ export default {
       this.$emit("select", []);
     },
     addNode() {
-      const newNode = this.opacityMode ? [0, 0] : [0, 0, 0, 0];
+      const newNode = [0, 0, 0, 0];
       const newList = [...this.nodes];
       newList.push(newNode);
       this.$emit("select", [

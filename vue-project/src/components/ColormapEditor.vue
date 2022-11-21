@@ -119,7 +119,9 @@ export default {
           this.computedDark
         );
       }
-      drawLabels(this.histogramData, this.$refs.histogramLabels);
+      if (!this.options.opacityMode) {
+        drawLabels(this.histogramData, this.$refs.histogramLabels);
+      }
       drawGradient(
         this.colorNodes,
         this.$refs.gradientBox,
@@ -138,11 +140,6 @@ export default {
     },
     updateOption(optionName, newValue) {
       this.options[optionName] = newValue;
-      if (optionName == "opacityMode") {
-        this.render();
-        this.selectedNodes = [];
-        this.filterRange = undefined;
-      }
     },
     updateFilterRange(newRange) {
       this.filterRange = newRange;
@@ -202,7 +199,7 @@ export default {
           mdi-help-circle
         </v-icon>
       </template>
-      <div class="caption">
+      <div class="caption" v-if="!options.opacityMode">
         Double click gradient bar to create new control point
         <br />
         Double click existing control point to edit color
@@ -210,6 +207,15 @@ export default {
         Drag along section of gradient to select range and filter table
         <br />
         Drag existing control point to edit its value
+      </div>
+      <div class="caption" v-else>
+        Drag a function node to move/select it
+        <br />
+        Drag a node's control points to edit the curve between two nodes
+        <br />
+        Click anywhere else on the graph to create a new node
+        <br />
+        Use the node list below to edit and delete points
       </div>
     </v-tooltip>
     <option-icons
@@ -235,9 +241,11 @@ export default {
     <opacity-editor
       v-if="options.opacityMode"
       :opacityNodes="opacityNodes"
+      :selectedNodes="selectedNodes"
       :dark="computedDark"
       :dataRange="dataRange"
       @update="updateOpacityNodes"
+      @select="updateSelectedNodes"
     />
     <div
       ref="histogramLabels"
