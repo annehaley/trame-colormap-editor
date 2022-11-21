@@ -309,9 +309,9 @@ export default {
       secondaryFill
     ) {
       var control = document.createElementNS(svgns, "circle");
-      var shifted = { x, y: y - 15 };
-      if (index === 1) shifted = { x: x + 20, y };
-      if (index === 2) shifted = { x: x - 20, y };
+      var shifted = { x, y: y - 5 };
+      if (index === 1) shifted = { x: x + 10, y };
+      if (index === 2) shifted = { x: x - 10, y };
       control.setAttributeNS(null, "cx", `${shifted.x}`);
       control.setAttributeNS(null, "cy", `${shifted.y}`);
       control.setAttributeNS(null, "r", "5");
@@ -431,6 +431,7 @@ export default {
       },
       deep: true,
     },
+    dark: registerPlugin,
   },
 };
 </script>

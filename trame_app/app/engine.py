@@ -15,15 +15,15 @@ DEFAULT_COLOR_MAP = [
 
 
 DEFAULT_OPACITY_MAP = [
-    [0, 0],
-    [100, 0.2],
-    [190, 0.7],
-    [200, 1],
-    [255, 1],
+    [0, 0, 0.7, 1],
+    [70, 0.3, 0.2, 1],
+    [190, 0.7, 0.5, 1],
+    [255, 1, 0.5, 0],
 ]
 
 DATA_PATH = Path(__file__).parent.parent.with_name("data")
 DATASET_PATH = (DATA_PATH / "skull.vti").absolute()
+
 
 # ---------------------------------------------------------
 # Server binding
